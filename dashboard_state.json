@@ -1,0 +1,68 @@
+{
+  "edit_mode": false,
+  "tiles": [
+    {
+      "x": 0.0,
+      "y": 0.0,
+      "width": 100.0,
+      "height": 100.0,
+      "text": "Gauge 1"
+    },
+    {
+      "x": 100.0,
+      "y": 0.0,
+      "width": 100.0,
+      "height": 100.0,
+      "text": "Gauge 2"
+    },
+    {
+      "x": 200.0,
+      "y": 0.0,
+      "width": 100.0,
+      "height": 100.0,
+      "text": "Gauge 3"
+    },
+    {
+      "x": 0.0,
+      "y": 100.0,
+      "width": 100.0,
+      "height": 100.0,
+      "text": "Gauge 4"
+    },
+    {
+      "x": 100.0,
+      "y": 100.0,
+      "width": 100.0,
+      "height": 100.0,
+      "text": "Gauge 5"
+    },
+    {
+      "x": 200.0,
+      "y": 100.0,
+      "width": 100.0,
+      "height": 100.0,
+      "text": "Gauge 6"
+    },
+    {
+      "x": 0.0,
+      "y": 200.0,
+      "width": 100.0,
+      "height": 100.0,
+      "text": "Gauge 7"
+    },
+    {
+      "x": 240.0,
+      "y": 380.0,
+      "width": 100.0,
+      "height": 100.0,
+      "text": "Gauge 8"
+    },
+    {
+      "x": 390.0,
+      "y": 110.0,
+      "width": 210.0,
+      "height": 250.0,
+      "text": "Gauge 9"
+    }
+  ]
+}

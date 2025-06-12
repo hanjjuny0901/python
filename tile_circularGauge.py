@@ -1,5 +1,5 @@
 import sys
-import math
+import json
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QGraphicsView, QGraphicsScene,
     QGraphicsRectItem, QGraphicsLineItem, QGraphicsProxyWidget, QSizePolicy, QMenu
@@ -294,6 +294,22 @@ class ResizableTileItem(QGraphicsRectItem):
         self.setFlag(QGraphicsRectItem.ItemIsSelectable, enabled)
         self.setAcceptHoverEvents(enabled)
 
+    def get_state(self):
+        """타일의 현재 상태(위치, 크기, 텍스트) 반환"""
+        return {
+            "x": float(self.pos().x()),
+            "y": float(self.pos().y()),
+            "width": float(self.rect().width()),
+            "height": float(self.rect().height()),
+            "text": self.text
+        }
+
+    def set_state(self, state):
+        self.setRect(0, 0, state["width"], state["height"])
+        self.setPos(state["x"], state["y"])
+        self.text = state.get("text", self.text)
+        self._update_proxy_geometry()
+
 class SystemResourceView(QWidget):
     def __init__(self):
         super().__init__()
@@ -310,6 +326,7 @@ class SystemResourceView(QWidget):
         self.scene.setSceneRect(0, 0, 800, 600)
         self.add_grid_lines()
         self.create_tiles()
+        self.load_layout()  # ✅ 앱 시작 시 자동 불러오기
 
     def eventFilter(self, obj, event):
         if obj is self.view.viewport() and event.type() == event.Resize:
@@ -342,6 +359,11 @@ class SystemResourceView(QWidget):
         menu = QMenu()
         edit_action = menu.addAction("Edit Mode On" if not self.edit_mode else "Edit Mode Off")
         edit_action.triggered.connect(self.toggle_edit_mode)
+        menu.addSeparator()
+        save_action = menu.addAction("저장")
+        save_action.triggered.connect(self.save_layout)
+        load_action = menu.addAction("불러오기")
+        load_action.triggered.connect(self.load_layout)
         menu.exec_(self.mapToGlobal(pos))
 
     def toggle_edit_mode(self):
@@ -357,6 +379,7 @@ class SystemResourceView(QWidget):
         widgets = [CircularGauge() for _ in range(9)]
         grid_cols = 3
         grid_rows = 3
+        self.tiles.clear()
         for row in range(grid_rows):
             for col in range(grid_cols):
                 idx = row * grid_cols + col
@@ -376,6 +399,28 @@ class SystemResourceView(QWidget):
                 tile.setPos(x, y)
                 tile.set_enabled(self.edit_mode)
                 self.tiles.append(tile)
+
+    def save_layout(self):
+        state = {
+            "edit_mode": self.edit_mode,
+            "tiles": [tile.get_state() for tile in self.tiles]
+        }
+        with open("dashboard_state.json", "w", encoding="utf-8") as f:
+            json.dump(state, f, indent=2)
+        print("저장 완료: dashboard_state.json")
+
+    def load_layout(self):
+        try:
+            with open("dashboard_state.json", "r", encoding="utf-8") as f:
+                state = json.load(f)
+            tile_states = state.get("tiles", [])
+            for tile, tile_state in zip(self.tiles, tile_states):
+                tile.set_state(tile_state)
+            self.edit_mode = state.get("edit_mode", False)
+            self.update_grid_and_tiles()
+            print("불러오기 완료: dashboard_state.json")
+        except Exception as e:
+            print(f"불러오기 실패: {e}")
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
