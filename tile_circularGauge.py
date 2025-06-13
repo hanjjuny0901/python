@@ -78,7 +78,7 @@ class ResizableTileItem(QGraphicsRectItem):
         widget.setMask(region)
 
     def paint(self, painter, option, widget=None):
-        rect = self.rect()
+        rect = self.boundingRect()
         corner_radius = 20
         path = QPainterPath()
         path.addRoundedRect(rect, corner_radius, corner_radius)
@@ -86,7 +86,7 @@ class ResizableTileItem(QGraphicsRectItem):
         painter.setBrush(QBrush(self.color))
         # ✅ 테두리 추가
         painter.setPen(
-            QPen(QColor(180, 180, 255, 180), 5)
+            QPen(QColor(180, 180, 255, 180), 2)
         )  # 밝은 파란색 반투명, 두께 2
         painter.drawPath(path)
         # 내부 텍스트
@@ -94,6 +94,13 @@ class ResizableTileItem(QGraphicsRectItem):
         painter.drawText(
             rect.adjusted(0, 0, 0, -20), Qt.AlignBottom | Qt.AlignHCenter, self.text
         )
+
+    def boundingRect(self):
+        # 테두리 두께(예: 5) 만큼 사방에 여유를 둠
+        pen_width = 2  # 테두리 두께와 동일하게!
+        adjust = pen_width / 2.0
+        rect = super().boundingRect()
+        return rect.adjusted(-adjust, -adjust, adjust, adjust)
 
     def hoverMoveEvent(self, event):
         rect = self.rect().adjusted(0, 0, -1, -1)
@@ -203,16 +210,22 @@ class SystemResourceView(QWidget):
         self.scene = QGraphicsScene()
         self.view = QGraphicsView(self.scene)
         self.view.viewport().installEventFilter(self)
+        self.view.setDragMode(QGraphicsView.RubberBandDrag)
         main_layout.addWidget(self.view)
         self.edit_mode = False
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.show_context_menu)
         self.grid_size = 10
         self.tiles = []
-        self.scene.setSceneRect(0, 0, 800, 600)
+        # self.scene.setSceneRect(0, 0, 800, 600)
         self.add_grid_lines()
         self.create_tiles()
-        self.load_layout()  # ✅ 앱 시작 시 자동 불러오기
+        self.load_layout()
+        self.update_minimum_size()  # ✅ 앱 시작 시 자동 불러오기
+        self.resize(
+            int(self.scene.sceneRect().width()) + 10,
+            int(self.scene.sceneRect().height()) + 10,
+        )
 
     def eventFilter(self, obj, event):
         if obj is self.view.viewport() and event.type() == event.Resize:
@@ -312,11 +325,20 @@ class SystemResourceView(QWidget):
         except Exception as e:
             print(f"불러오기 실패: {e}")
 
+    def update_minimum_size(self):
+        """모든 타일의 경계까지 포함하는 최소 크기를 계산해 윈도우 최소 크기로 설정"""
+        if not self.tiles:
+            return
+        max_right = max(tile.pos().x() + tile.rect().width() for tile in self.tiles)
+        max_bottom = max(tile.pos().y() + tile.rect().height() for tile in self.tiles)
+        margin = 20  # 스크롤바, 테두리 등 여유
+        self.setMinimumSize(int(max_right + margin), int(max_bottom + margin))
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     qdarktheme.setup_theme("dark")
     window = SystemResourceView()
-    window.resize(900, 700)
+    #  window.resize(900, 500)
     window.show()
     sys.exit(app.exec_())
