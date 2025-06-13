@@ -1,7 +1,7 @@
 import sys
 import psutil
 import numpy as np
-from PyQt5.QtCore import QTimer
+from PyQt5.QtCore import QTimer, Qt
 from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
@@ -13,9 +13,12 @@ class CPUGraphWidget(QWidget):
         super().__init__(parent)
         self.num_points = num_points
         self.data = [0] * num_points
+        self.setAttribute(Qt.WA_TranslucentBackground)
+        self.setAttribute(Qt.WA_TransparentForMouseEvents, True)
+        self.setStyleSheet("background: transparent;")
 
-        # Matplotlib Figure 설정
-        self.figure = Figure(figsize=(5, 3), facecolor="#2e2e2e")
+        # 200x200 픽셀로 지정 (dpi=100, figsize=2x2인치)
+        self.figure = Figure(figsize=(2, 2), dpi=100, facecolor="#2e2e2e")
         self.canvas = FigureCanvas(self.figure)
         self.ax = self.figure.add_subplot(111)
 
@@ -36,10 +39,13 @@ class CPUGraphWidget(QWidget):
         self.ax.set_xticks(range(0, 61, 10))
         self.ax.set_yticks([0, 20, 40, 60, 80, 100])
         self.ax.set_autoscale_on(False)
-        self.ax.set_title(title)
+        # self.ax.set_title(title)
         self.ax.set_xlabel("Time (seconds)")
         self.ax.set_ylabel("Usage (%)")
         self.ax.grid(True, color="gray", linestyle="--", linewidth=0.5, alpha=0.7)
+
+        # ✅ tick label 폰트 크기 축소
+        self.ax.tick_params(axis="both", which="major", labelsize=6)
 
         # 초기 플롯 생성
         (self.line,) = self.ax.plot(range(num_points), self.data, color="#00FF00")
@@ -81,6 +87,6 @@ if __name__ == "__main__":
     qdarktheme.setup_theme("dark")
 
     widget = CPUGraphWidget("CPU Usage")
-    widget.resize(600, 350)
+    widget.resize(200, 200)
     widget.show()
     sys.exit(app.exec_())

@@ -14,6 +14,8 @@ class GaugeWithTitle(QWidget):
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 10, 0, 0)
         layout.setSpacing(0)
+        self.setAttribute(Qt.WA_TranslucentBackground)
+        self.setStyleSheet("background: transparent;")
 
         # 타이틀 라벨
         self.title_label = QLabel(title)
