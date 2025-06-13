@@ -15,9 +15,8 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt, QRectF, QPointF
 from PyQt5.QtGui import QBrush, QColor, QPainter, QPen, QPainterPath, QFont, QRegion
 
-from GaugeWithTitle import (
-    GaugeWithTitle,
-)  # 첨부파일의 CircularGauge 클래스를 paste.py에 저장했다고 가정
+from GaugeWithTitle import GaugeWithTitle
+from CPUGraphWidget import CPUGraphWidget
 import qdarktheme
 
 
@@ -47,7 +46,7 @@ class ResizableTileItem(QGraphicsRectItem):
         self.setAcceptHoverEvents(True)
         self.text = text
         self.resizing = False
-        self.resize_handle_size = 30
+        self.resize_handle_size = 50
         self.all_tiles = all_tiles or []
         self.proxy_inset = 10
 
@@ -78,7 +77,7 @@ class ResizableTileItem(QGraphicsRectItem):
         widget.setMask(region)
 
     def paint(self, painter, option, widget=None):
-        rect = self.boundingRect()
+        rect = self.rect()
         corner_radius = 20
         path = QPainterPath()
         path.addRoundedRect(rect, corner_radius, corner_radius)
@@ -86,7 +85,7 @@ class ResizableTileItem(QGraphicsRectItem):
         painter.setBrush(QBrush(self.color))
         # ✅ 테두리 추가
         painter.setPen(
-            QPen(QColor(180, 180, 255, 180), 2)
+            QPen(QColor(180, 180, 255, 180), 5)
         )  # 밝은 파란색 반투명, 두께 2
         painter.drawPath(path)
         # 내부 텍스트
