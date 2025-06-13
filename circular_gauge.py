@@ -3,12 +3,27 @@ from PyQt5.QtWidgets import QApplication, QWidget
 from PyQt5.QtCore import Qt, QRectF
 from PyQt5.QtGui import QBrush, QColor, QPainter, QPen, QPainterPath, QFont, QPalette
 
+
 class CircularGauge(QWidget):
-    def __init__(self, title="Circular Gauge", min_value=0.0, max_value=100.0, value=50.0, steps=1,
-                 start_angle=-210.0, end_angle=30.0, outer_circle_pen_color=QColor(50, 50, 50),
-                 outer_circle_brush_color=QColor(30, 30, 30), outer_circle_thickness=40,
-                 inner_ring_pen_color=QColor(70, 70, 70), inner_ring_brush_color=QColor(40, 40, 40),
-                 inner_circle_brush_color=QColor(20, 20, 20), number_font_size=12, number_font_family='Arial', parent=None):
+    def __init__(
+        self,
+        title="Circular Gauge",
+        min_value=0.0,
+        max_value=100.0,
+        value=50.0,
+        steps=1,
+        start_angle=-210.0,
+        end_angle=30.0,
+        outer_circle_pen_color=QColor(50, 50, 50),
+        outer_circle_brush_color=QColor(30, 30, 30),
+        outer_circle_thickness=50,
+        inner_ring_pen_color=QColor(70, 70, 70),
+        inner_ring_brush_color=QColor(40, 40, 40),
+        inner_circle_brush_color=QColor(20, 20, 20),
+        number_font_size=12,
+        number_font_family="Arial",
+        parent=None,
+    ):
         super().__init__(parent)
         self.title = title
         self.min_value = min_value
@@ -19,7 +34,7 @@ class CircularGauge(QWidget):
         self.end_angle = end_angle
         self.angle_range = self.end_angle - self.start_angle
         self.outer_circle_thickness = outer_circle_thickness
-        self.setMinimumSize(200, 200)
+        self.setMinimumSize(100, 100)
         self.outer_circle_pen_color = outer_circle_pen_color
         self.outer_circle_brush_color = outer_circle_brush_color
         self.inner_ring_pen_color = inner_ring_pen_color
@@ -38,9 +53,12 @@ class CircularGauge(QWidget):
             painter.setRenderHint(QPainter.Antialiasing)
             rect = self.rect()
             center = rect.center()
-            # 타이틀 그리기 (별도 메서드)
-            self.drawTitle(painter, rect)
+            # 동적으로 두께 결정 (최소 5픽셀, 전체 크기의 6%)
+            min_dim = min(rect.width(), rect.height())
+            self.outer_circle_thickness = max(5, int(min_dim * 0.15))
             radius = min(rect.width(), rect.height()) / 2 - self.outer_circle_thickness
+
+            self.drawTitle(painter, rect, radius, center)
             painter.translate(center)
             self.drawOuterArc(painter, radius)
             self.drawOuterArc2(painter, radius)
@@ -63,11 +81,15 @@ class CircularGauge(QWidget):
         current_start = -self.start_angle
 
         bg_path = QPainterPath()
-        bg_rect = QRectF(-outer_radius, -outer_radius, 2*outer_radius, 2*outer_radius)
+        bg_rect = QRectF(
+            -outer_radius, -outer_radius, 2 * outer_radius, 2 * outer_radius
+        )
         bg_path.arcMoveTo(bg_rect, current_start)
         bg_path.arcTo(bg_rect, current_start, -total_angle)
         bg_path.lineTo(bg_path.currentPosition())
-        inner_rect = QRectF(-inner_radius, -inner_radius, 2*inner_radius, 2*inner_radius)
+        inner_rect = QRectF(
+            -inner_radius, -inner_radius, 2 * inner_radius, 2 * inner_radius
+        )
         bg_path.arcTo(inner_rect, current_start - total_angle, total_angle)
         painter.setPen(Qt.NoPen)
         painter.setBrush(self.outer_circle_brush_color)
@@ -105,8 +127,8 @@ class CircularGauge(QWidget):
             painter.setBrush(QColor(220, 50, 50, 200))
             painter.drawPath(red_path)
 
-    def drawOuterArc2(self, painter, radius): 
-        outer_radius = radius + self.outer_circle_thickness/3 + 3
+    def drawOuterArc2(self, painter, radius):
+        outer_radius = radius + self.outer_circle_thickness / 3 + 3
         inner_radius = radius + 3
         total_angle = self.angle_range
         green_angle = total_angle * 0.8
@@ -116,10 +138,12 @@ class CircularGauge(QWidget):
 
         # 초록색 아크 (0~80%)
         path_green = QPainterPath()
-        rect = QRectF(-outer_radius, -outer_radius, 2*outer_radius, 2*outer_radius)
+        rect = QRectF(-outer_radius, -outer_radius, 2 * outer_radius, 2 * outer_radius)
         path_green.arcMoveTo(rect, start_angle)
         path_green.arcTo(rect, start_angle, -green_angle)
-        inner_rect = QRectF(-inner_radius, -inner_radius, 2*inner_radius, 2*inner_radius)
+        inner_rect = QRectF(
+            -inner_radius, -inner_radius, 2 * inner_radius, 2 * inner_radius
+        )
         path_green.lineTo(path_green.currentPosition())
         path_green.arcTo(inner_rect, start_angle - green_angle, green_angle)
         painter.setPen(Qt.NoPen)
@@ -146,12 +170,19 @@ class CircularGauge(QWidget):
         painter.setBrush(QColor(220, 50, 50, 120))
         painter.drawPath(path_red)
 
-    def drawTitle(self, painter, rect):
+    def drawTitle(self, painter, rect, radius, center):
         painter.setPen(Qt.white)
         font = QFont(self.number_font_family, self.number_font_size)
         painter.setFont(font)
-        title_rect = QRectF(rect.x(), rect.y() + 2, rect.width(), self.number_font_size * 2)
-        painter.drawText(title_rect, Qt.AlignCenter, self.title if hasattr(self, 'title') else "Circular Gauge")
+        # 게이지 원의 윗부분 위에 타이틀을 놓음
+        # center.y() - radius가 원의 맨 위, 거기서 약간 위로 띄움
+        title_y = center.y() - radius - 30 - self.number_font_size * 1.2
+        title_rect = QRectF(rect.x(), title_y, rect.width(), self.number_font_size * 2)
+        painter.drawText(
+            title_rect,
+            Qt.AlignCenter,
+            self.title if hasattr(self, "title") else "Circular Gauge",
+        )
 
     def drawCenterPercentage(self, painter, radius):
         painter.setPen(QColor(220, 220, 220))
@@ -161,7 +192,7 @@ class CircularGauge(QWidget):
         painter.setFont(font)
         # 사각형을 충분히 크게 (중앙 정렬)
         box_size = radius * 1.6  # 1.6~1.8 정도로 확대
-        text_rect = QRectF(-box_size/2, -box_size/2, box_size, box_size)
+        text_rect = QRectF(-box_size / 2, -box_size / 2, box_size, box_size)
         painter.drawText(text_rect, Qt.AlignCenter, f"{self.value:.0f}%")
 
 
@@ -195,7 +226,7 @@ if __name__ == "__main__":
         inner_ring_brush_color=QColor(40, 40, 40),
         inner_circle_brush_color=QColor(20, 20, 20),
         number_font_size=14,
-        number_font_family='Arial'
+        number_font_family="Arial",
     )
     gauge.resize(400, 400)
     gauge.show()

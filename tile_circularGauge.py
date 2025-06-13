@@ -1,176 +1,49 @@
 import sys
 import json
 from PyQt5.QtWidgets import (
-    QApplication, QWidget, QVBoxLayout, QGraphicsView, QGraphicsScene,
-    QGraphicsRectItem, QGraphicsLineItem, QGraphicsProxyWidget, QSizePolicy, QMenu
+    QApplication,
+    QWidget,
+    QVBoxLayout,
+    QGraphicsView,
+    QGraphicsScene,
+    QGraphicsRectItem,
+    QGraphicsLineItem,
+    QGraphicsProxyWidget,
+    QSizePolicy,
+    QMenu,
 )
 from PyQt5.QtCore import Qt, QRectF, QPointF
 from PyQt5.QtGui import QBrush, QColor, QPainter, QPen, QPainterPath, QFont, QRegion
 
-class CircularGauge(QWidget):
-    def __init__(self, title="Circular Gauge", min_value=0.0, max_value=100.0, value=50.0, steps=1,
-                 start_angle=-210.0, end_angle=30.0, outer_circle_pen_color=Qt.black,
-                 outer_circle_brush_color=None, outer_circle_thickness=12,
-                 inner_ring_pen_color=Qt.black, inner_ring_brush_color=Qt.white,
-                 inner_circle_brush_color=None, number_font_size=10, number_font_family='Arial', parent=None):
-        super().__init__(parent)
-        self.title = title
-        self.min_value = min_value
-        self.max_value = max_value
-        self.value = value
-        self.steps = steps
-        self.start_angle = start_angle
-        self.end_angle = end_angle
-        self.angle_range = self.end_angle - self.start_angle
-        self.outer_circle_thickness = outer_circle_thickness
-        self.setMinimumSize(100, 100)
-        self.outer_circle_pen_color = QColor(outer_circle_pen_color)
-        self.outer_circle_brush_color = QColor(outer_circle_brush_color) if outer_circle_brush_color else None
-        self.inner_ring_pen_color = QColor(inner_ring_pen_color)
-        self.inner_ring_brush_color = QColor(inner_ring_brush_color) if inner_ring_brush_color else None
-        self.inner_circle_brush_color = QColor(inner_circle_brush_color) if inner_circle_brush_color else None
-        self.number_font_size = number_font_size
-        self.number_font_family = number_font_family
+from GaugeWithTitle import (
+    GaugeWithTitle,
+)  # 첨부파일의 CircularGauge 클래스를 paste.py에 저장했다고 가정
+import qdarktheme
 
-    def setValue(self, value):
-        self.value = max(self.min_value, min(self.max_value, value))
-        self.update()
-
-    def paintEvent(self, event):
-        try:
-            painter = QPainter(self)
-            painter.setRenderHint(QPainter.Antialiasing)
-            rect = self.rect()
-            center = rect.center()
-            # 타이틀을 더 위쪽에 표시
-            painter.setPen(Qt.black)
-            font = QFont(self.number_font_family, self.number_font_size)
-            painter.setFont(font)
-            title_rect = QRectF(rect.x(), rect.y() + 2, rect.width(), self.number_font_size * 2)
-            painter.drawText(title_rect, Qt.AlignCenter, self.title if hasattr(self, 'title') else "Circular Gauge")
-            radius = min(rect.width(), rect.height()) / 2 - self.outer_circle_thickness
-            painter.translate(center)
-            self.drawOuterArc(painter, radius)
-            self.drawOuterArc2(painter, radius)
-            self.drawCenterPercentage(painter, radius)
-        except Exception as e:
-            print(f"Error in paintEvent: {e}")
-
-    def drawOuterArc(self, painter, radius):
-        path = QPainterPath()
-        outer_radius = radius
-        inner_radius = radius - self.outer_circle_thickness
-        total_angle = self.angle_range
-        filled_angle = total_angle * (self.value / 100)
-        green_limit = total_angle * 0.8
-        yellow_limit = total_angle * 0.1
-        red_limit = total_angle * 0.1
-        green_angle = min(filled_angle, green_limit)
-        yellow_angle = min(max(filled_angle - green_limit, 0), yellow_limit)
-        red_angle = max(filled_angle - green_limit - yellow_limit, 0)
-        current_start = -self.start_angle
-
-        bg_path = QPainterPath()
-        bg_rect = QRectF(-outer_radius, -outer_radius, 2*outer_radius, 2*outer_radius)
-        bg_path.arcMoveTo(bg_rect, current_start)
-        bg_path.arcTo(bg_rect, current_start, -total_angle)
-        bg_path.lineTo(bg_path.currentPosition())
-        inner_rect = QRectF(-inner_radius, -inner_radius, 2*inner_radius, 2*inner_radius)
-        bg_path.arcTo(inner_rect, current_start - total_angle, total_angle)
-        painter.setPen(Qt.NoPen)
-        painter.setBrush(QColor(50, 50, 50, 100))
-        painter.drawPath(bg_path)
-
-        # 초록색 구간
-        if green_angle > 0:
-            green_path = QPainterPath()
-            green_path.arcMoveTo(bg_rect, current_start)
-            green_path.arcTo(bg_rect, current_start, -green_angle)
-            green_path.lineTo(green_path.currentPosition())
-            green_path.arcTo(inner_rect, current_start - green_angle, green_angle)
-            painter.setBrush(QColor(0, 255, 0, 150))
-            painter.drawPath(green_path)
-            current_start -= green_angle
-
-        # 노란색 구간
-        if yellow_angle > 0:
-            yellow_path = QPainterPath()
-            yellow_path.arcMoveTo(bg_rect, current_start)
-            yellow_path.arcTo(bg_rect, current_start, -yellow_angle)
-            yellow_path.lineTo(yellow_path.currentPosition())
-            yellow_path.arcTo(inner_rect, current_start - yellow_angle, yellow_angle)
-            painter.setBrush(QColor(255, 255, 0, 150))
-            painter.drawPath(yellow_path)
-            current_start -= yellow_angle
-
-        # 빨간색 구간
-        if red_angle > 0:
-            red_path = QPainterPath()
-            red_path.arcMoveTo(bg_rect, current_start)
-            red_path.arcTo(bg_rect, current_start, -red_angle)
-            red_path.lineTo(red_path.currentPosition())
-            red_path.arcTo(inner_rect, current_start - red_angle, red_angle)
-            painter.setBrush(QColor(255, 0, 0, 150))
-            painter.drawPath(red_path)
-
-    def drawOuterArc2(self, painter, radius):
-        outer_radius = radius + self.outer_circle_thickness/3 + 3
-        inner_radius = radius + 3
-        total_angle = self.angle_range
-        green_angle = total_angle * 0.8
-        yellow_angle = total_angle * 0.1
-        red_angle = total_angle * 0.1
-        start_angle = -self.start_angle
-
-        # 초록색 아크 (0~80%)
-        path_green = QPainterPath()
-        rect = QRectF(-outer_radius, -outer_radius, 2*outer_radius, 2*outer_radius)
-        path_green.arcMoveTo(rect, start_angle)
-        path_green.arcTo(rect, start_angle, -green_angle)
-        inner_rect = QRectF(-inner_radius, -inner_radius, 2*inner_radius, 2*inner_radius)
-        path_green.lineTo(path_green.currentPosition())
-        path_green.arcTo(inner_rect, start_angle - green_angle, green_angle)
-        painter.setPen(Qt.NoPen)
-        painter.setBrush(QColor(0, 255, 0, 150))
-        painter.drawPath(path_green)
-
-        # 노란색 아크 (80~90%)
-        path_yellow = QPainterPath()
-        yellow_start = start_angle - green_angle
-        path_yellow.arcMoveTo(rect, yellow_start)
-        path_yellow.arcTo(rect, yellow_start, -yellow_angle)
-        path_yellow.lineTo(path_yellow.currentPosition())
-        path_yellow.arcTo(inner_rect, yellow_start - yellow_angle, yellow_angle)
-        painter.setBrush(QColor(255, 255, 0, 150))
-        painter.drawPath(path_yellow)
-
-        # 빨간색 아크 (90~100%)
-        path_red = QPainterPath()
-        red_start = yellow_start - yellow_angle
-        path_red.arcMoveTo(rect, red_start)
-        path_red.arcTo(rect, red_start, -red_angle)
-        path_red.lineTo(path_red.currentPosition())
-        path_red.arcTo(inner_rect, red_start - red_angle, red_angle)
-        painter.setBrush(QColor(255, 0, 0, 150))
-        painter.drawPath(path_red)
-
-    def drawCenterPercentage(self, painter, radius):
-        painter.setPen(Qt.white)
-        font = QFont()
-        font.setPointSize(self.number_font_size)
-        painter.setFont(font)
-        text_rect = QRectF(-radius/2, -radius/2, radius, radius)
-        painter.drawText(text_rect, Qt.AlignCenter, f"{self.value:.0f}%")
 
 class ResizableTileItem(QGraphicsRectItem):
-    def __init__(self, grid_size, cols, rows, widget, color, text, all_tiles=None, scene_rect=None):
+    def __init__(
+        self,
+        grid_size,
+        cols,
+        rows,
+        widget,
+        color,
+        text,
+        all_tiles=None,
+        scene_rect=None,
+    ):
         w = grid_size * cols
         h = grid_size * rows
         super().__init__(0, 0, w, h)
         self.grid_size = grid_size
         self.color = color
         self.setPen(QPen(Qt.NoPen))
-        self.setFlags(QGraphicsRectItem.ItemIsMovable | QGraphicsRectItem.ItemIsSelectable | QGraphicsRectItem.ItemSendsGeometryChanges)
+        self.setFlags(
+            QGraphicsRectItem.ItemIsMovable
+            | QGraphicsRectItem.ItemIsSelectable
+            | QGraphicsRectItem.ItemSendsGeometryChanges
+        )
         self.setAcceptHoverEvents(True)
         self.text = text
         self.resizing = False
@@ -195,7 +68,7 @@ class ResizableTileItem(QGraphicsRectItem):
         widget = self.proxy.widget()
         if widget:
             widget.resize(int(tile_rect.width()), int(tile_rect.height()))
-            self.set_rounded_mask(widget, 0)
+            self.set_rounded_mask(widget, 20)
 
     def set_rounded_mask(self, widget, radius):
         rect = QRectF(widget.rect())
@@ -211,16 +84,24 @@ class ResizableTileItem(QGraphicsRectItem):
         path.addRoundedRect(rect, corner_radius, corner_radius)
         painter.setRenderHint(QPainter.Antialiasing)
         painter.setBrush(QBrush(self.color))
-        painter.setPen(Qt.NoPen)
+        # ✅ 테두리 추가
+        painter.setPen(
+            QPen(QColor(180, 180, 255, 180), 5)
+        )  # 밝은 파란색 반투명, 두께 2
         painter.drawPath(path)
+        # 내부 텍스트
         painter.setPen(Qt.white)
-        painter.drawText(rect.adjusted(0, 0, 0, -20), Qt.AlignBottom | Qt.AlignHCenter, self.text)
+        painter.drawText(
+            rect.adjusted(0, 0, 0, -20), Qt.AlignBottom | Qt.AlignHCenter, self.text
+        )
 
     def hoverMoveEvent(self, event):
         rect = self.rect().adjusted(0, 0, -1, -1)
         pos = event.pos()
-        if (rect.right() - self.resize_handle_size <= pos.x() <= rect.right() and 
-            rect.bottom() - self.resize_handle_size <= pos.y() <= rect.bottom()):
+        if (
+            rect.right() - self.resize_handle_size <= pos.x() <= rect.right()
+            and rect.bottom() - self.resize_handle_size <= pos.y() <= rect.bottom()
+        ):
             self.setCursor(Qt.SizeFDiagCursor)
         else:
             self.setCursor(Qt.ArrowCursor)
@@ -229,8 +110,10 @@ class ResizableTileItem(QGraphicsRectItem):
     def mousePressEvent(self, event):
         rect = self.rect()
         pos = event.pos()
-        if (rect.right() - self.resize_handle_size <= pos.x() <= rect.right() and 
-            rect.bottom() - self.resize_handle_size <= pos.y() <= rect.bottom()):
+        if (
+            rect.right() - self.resize_handle_size <= pos.x() <= rect.right()
+            and rect.bottom() - self.resize_handle_size <= pos.y() <= rect.bottom()
+        ):
             self.resizing = True
             self.setCursor(Qt.SizeFDiagCursor)
         else:
@@ -261,10 +144,10 @@ class ResizableTileItem(QGraphicsRectItem):
 
     def mouseReleaseEvent(self, event):
         if not self.resizing:
-            if getattr(self, 'is_enabled', True):  # 편집모드일 때만 스냅
+            if getattr(self, "is_enabled", True):  # 편집모드일 때만 스냅
                 final_pos = QPointF(
                     round(self.pos().x() / self.grid_size) * self.grid_size,
-                    round(self.pos().y() / self.grid_size) * self.grid_size
+                    round(self.pos().y() / self.grid_size) * self.grid_size,
                 )
                 self.setPos(final_pos)
         self.resizing = False
@@ -277,10 +160,12 @@ class ResizableTileItem(QGraphicsRectItem):
             if tile is self:
                 continue
             other_rect = tile.sceneBoundingRect()
-            if (my_rect.left() < other_rect.right() and 
-                my_rect.right() > other_rect.left() and 
-                my_rect.top() < other_rect.bottom() and 
-                my_rect.bottom() > other_rect.top()):
+            if (
+                my_rect.left() < other_rect.right()
+                and my_rect.right() > other_rect.left()
+                and my_rect.top() < other_rect.bottom()
+                and my_rect.bottom() > other_rect.top()
+            ):
                 return True
         return False
 
@@ -301,7 +186,7 @@ class ResizableTileItem(QGraphicsRectItem):
             "y": float(self.pos().y()),
             "width": float(self.rect().width()),
             "height": float(self.rect().height()),
-            "text": self.text
+            "text": self.text,
         }
 
     def set_state(self, state):
@@ -309,6 +194,7 @@ class ResizableTileItem(QGraphicsRectItem):
         self.setPos(state["x"], state["y"])
         self.text = state.get("text", self.text)
         self._update_proxy_geometry()
+
 
 class SystemResourceView(QWidget):
     def __init__(self):
@@ -357,7 +243,9 @@ class SystemResourceView(QWidget):
 
     def show_context_menu(self, pos):
         menu = QMenu()
-        edit_action = menu.addAction("Edit Mode On" if not self.edit_mode else "Edit Mode Off")
+        edit_action = menu.addAction(
+            "Edit Mode On" if not self.edit_mode else "Edit Mode Off"
+        )
         edit_action.triggered.connect(self.toggle_edit_mode)
         menu.addSeparator()
         save_action = menu.addAction("저장")
@@ -376,9 +264,11 @@ class SystemResourceView(QWidget):
             tile.set_enabled(self.edit_mode)
 
     def create_tiles(self):
-        widgets = [CircularGauge() for _ in range(9)]
         grid_cols = 3
         grid_rows = 3
+        widgets = [
+            GaugeWithTitle(f"CPU Usage {i+1}") for i in range(grid_cols * grid_rows)
+        ]  # ✅ 타이틀 지정
         self.tiles.clear()
         for row in range(grid_rows):
             for col in range(grid_cols):
@@ -393,7 +283,7 @@ class SystemResourceView(QWidget):
                     color=QColor(60, 60, 150, 100),
                     text=f"Gauge {idx+1}",
                     all_tiles=self.tiles,
-                    scene_rect=self.scene.sceneRect()
+                    scene_rect=self.scene.sceneRect(),
                 )
                 self.scene.addItem(tile)
                 tile.setPos(x, y)
@@ -403,7 +293,7 @@ class SystemResourceView(QWidget):
     def save_layout(self):
         state = {
             "edit_mode": self.edit_mode,
-            "tiles": [tile.get_state() for tile in self.tiles]
+            "tiles": [tile.get_state() for tile in self.tiles],
         }
         with open("dashboard_state.json", "w", encoding="utf-8") as f:
             json.dump(state, f, indent=2)
@@ -422,8 +312,10 @@ class SystemResourceView(QWidget):
         except Exception as e:
             print(f"불러오기 실패: {e}")
 
+
 if __name__ == "__main__":
     app = QApplication(sys.argv)
+    qdarktheme.setup_theme("dark")
     window = SystemResourceView()
     window.resize(900, 700)
     window.show()
