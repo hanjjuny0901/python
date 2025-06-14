@@ -9,6 +9,7 @@ from PyQt5.QtWidgets import (
     QGraphicsScene,
     QGraphicsLineItem,
     QMenu,
+    QSizePolicy,
 )
 from PyQt5.QtCore import Qt, QTimer, QPointF
 from PyQt5.QtGui import QColor, QPainter, QPalette
@@ -20,6 +21,21 @@ from CPUGraphWidget import CPUGraphWidget
 import qdarktheme
 from typing import List
 import os
+
+
+class ColorDemoWidget(QWidget):
+    def __init__(self, color=QColor(255, 100, 100, 180), parent=None):
+        super().__init__(parent)
+        self.color = color
+        self.setAttribute(Qt.WA_TranslucentBackground)
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+        painter.setBrush(self.color)
+        painter.setPen(Qt.NoPen)
+        painter.drawRect(self.rect())
 
 
 class SystemResourceView(QWidget):
@@ -171,6 +187,37 @@ class SystemResourceView(QWidget):
             graph_tile.set_enabled(self.edit_mode)
             self.tiles.append(graph_tile)
 
+            color_demo_model = TileModel(
+                x=450,
+                y=10,
+                width=200,
+                height=180,
+                widget_type="ColorDemoWidget",
+                core_id="demo",
+            )
+            self.model.add_tile(color_demo_model)
+            color_demo_widget = ColorDemoWidget(
+                color=QColor(255, 100, 100, 180)
+            )  # 원하는 색상 지정
+            color_demo_tile = ResizableTileItem(
+                self.grid_size,
+                cols=10,
+                rows=10,
+                widget=color_demo_widget,
+                color=QColor(80, 80, 80, 180),
+                text="Color Demo",
+                all_tiles=self.tiles,
+                tile_model=color_demo_model,
+            )
+            color_demo_tile.setRect(
+                0, 0, color_demo_model.width, color_demo_model.height
+            )
+            color_demo_tile.setPos(color_demo_model.x, color_demo_model.y)
+            color_demo_tile.viewmodel = self.viewmodel
+            self.scene.addItem(color_demo_tile)
+            color_demo_tile.set_enabled(self.edit_mode)
+            self.tiles.append(color_demo_tile)
+
     def save_layout(self):
         state = self.model.to_dict()
         with open("dashboard_state.json", "w", encoding="utf-8") as f:
@@ -212,7 +259,7 @@ class SystemResourceView(QWidget):
                     all_tiles=self.tiles,
                     tile_model=tile_model,
                 )
-                tile.setRect(0, 0, tile_model.width, tile_model.height)
+                tile.setRect(10, 10, tile_model.width, tile_model.height)
                 tile.setPos(tile_model.x, tile_model.y)
                 tile._update_proxy_geometry()
                 self.scene.addItem(tile)

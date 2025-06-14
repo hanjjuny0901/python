@@ -101,21 +101,41 @@ class ResizableTileItem(QGraphicsRectItem):
 
         self._update_proxy_geometry()
 
+    # def _update_proxy_geometry(self):
+    #     tile_rect = self.rect()
+    #     # ✅ float → int 변환
+    #     widget_width = int(tile_rect.width())
+    #     widget_height = int(tile_rect.height())
+
+    #     self.proxy.resize(widget_width, widget_height)
+    #     self.proxy.setPos(0, 0)
+
+    #     widget = self.proxy.widget()
+    #     if widget:
+    #         widget.resize(widget_width, widget_height)
+    #         widget.updateGeometry()
+
+    #     # 텍스트 위치 재조정
+    #     text_rect = self.text_item.boundingRect()
+    #     x = (tile_rect.width() - text_rect.width()) / 2
+    #     y = 4
+    #     self.text_item.setPos(x, y)
+
     def _update_proxy_geometry(self):
         tile_rect = self.rect()
-        # ✅ float → int 변환
-        widget_width = int(tile_rect.width())
-        widget_height = int(tile_rect.height())
+        margin = self.resize_handle_size  # 원하는 마진(px)
+        widget_width = int(tile_rect.width() - 2 * margin)
+        widget_height = int(tile_rect.height() - 2 * margin)
 
         self.proxy.resize(widget_width, widget_height)
-        self.proxy.setPos(0, 0)
+        self.proxy.setPos(margin, margin)  # 마진만큼 띄워서 중앙 배치
 
         widget = self.proxy.widget()
         if widget:
             widget.resize(widget_width, widget_height)
             widget.updateGeometry()
 
-        # 텍스트 위치 재조정
+        # 텍스트 위치 재조정 (상단 중앙)
         text_rect = self.text_item.boundingRect()
         x = (tile_rect.width() - text_rect.width()) / 2
         y = 4
