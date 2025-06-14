@@ -13,7 +13,7 @@ class CPUGraphWidget(QWidget):
         core_id: str = None,  # ✅ core_id 추가
         viewmodel: SystemResourceViewModel = None,  # ✅ viewmodel 추가
         title: str = "CPU Usage",
-        num_points: int = 60,
+        num_points: int = 30,
         parent=None,
     ):
         super().__init__(parent)
@@ -49,10 +49,10 @@ class CPUGraphWidget(QWidget):
         self.ax.spines["right"].set_color("white")
 
         # 축 범위 및 tick 설정
-        self.ax.set_xlim(0, 60)
+        self.ax.set_xlim(0, 30)
         self.ax.set_ylim(0, 100)
-        self.ax.set_xticks(range(0, 61, 10))
-        self.ax.set_yticks([0, 20, 40, 60, 80, 100])
+        self.ax.set_xticks(range(0, 31, 10))
+        self.ax.set_yticks([0, 25, 50, 75, 100])
         self.ax.set_autoscale_on(False)
         self.ax.set_xlabel("Time (seconds)")
         self.ax.set_ylabel("Usage (%)")

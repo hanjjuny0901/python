@@ -138,13 +138,7 @@ class ResizableTileItem(QGraphicsRectItem):
         painter.setPen(QPen(QColor(100, 100, 100, 180), self.border_width))
         painter.drawPath(path)
 
-        # # 3. 텍스트
-        # painter.setPen(Qt.white)
-        # painter.drawText(
-        #     rect.adjusted(0, 0, 0, -20), Qt.AlignBottom | Qt.AlignHCenter, self.text
-        # )
-
-        # 4. 선택 표시 (드래그/다중 선택 시)
+        # 3. 선택 표시 (드래그/다중 선택 시)
         if self.isSelected():
             # 반투명 노란색 오버레이와 진한 테두리
             select_color = QColor(255, 215, 0, 80)  # 연한 노랑, 반투명
@@ -152,7 +146,7 @@ class ResizableTileItem(QGraphicsRectItem):
             painter.setPen(QPen(QColor(255, 200, 0), 4))  # 진한 노랑 테두리
             painter.drawPath(path)
 
-        # 5. 핸들 감지 영역 시각화 (편집모드일 때만, 맨 마지막에!)
+        # 4. 핸들 감지 영역 시각화 (편집모드일 때만, 맨 마지막에!)
         if getattr(self, "is_enabled", False):  # 편집모드일 때만
             margin = self.resize_handle_size
             handle_color = QColor(0, 200, 255, 60)  # 밝은 시안, 반투명
@@ -356,15 +350,32 @@ class ResizableTileItem(QGraphicsRectItem):
                 self.setRect(0, 0, new_w, new_h)
                 self.setPos(new_x, new_y)
 
-            # 충돌 및 경계 체크
-            if self.is_within_scene() and not self.is_overlapping():
-                self._update_proxy_geometry()
-                self.scene().update()
-            else:
-                self.setRect(0, 0, rect.width(), rect.height())
-                self.setPos(self.original_scene_pos)
+            # ✅ 모든 선택된 타일의 크기 동기화
+            scene = self.scene()
+            if scene:
+                selected_items = scene.selectedItems()
+                for item in selected_items:
+                    if isinstance(item, ResizableTileItem) and item is not self:
+                        item.setRect(0, 0, new_w, new_h)
+                        item._update_proxy_geometry()
 
-            return  # ✅ 기본 이동 동작 방지
+            # 현재 타일 업데이트
+            self.setRect(0, 0, new_w, new_h)
+            self._update_proxy_geometry()
+
+            # 씬 갱신
+            scene.update()
+            return  # ✅ 기본 이동 이벤트 방지
+
+            # # 충돌 및 경계 체크
+            # if self.is_within_scene() and not self.is_overlapping():
+            #     self._update_proxy_geometry()
+            #     self.scene().update()
+            # else:
+            #     self.setRect(0, 0, rect.width(), rect.height())
+            #     self.setPos(self.original_scene_pos)
+
+            # return  # ✅ 기본 이동 동작 방지
 
         super().mouseMoveEvent(event)
 

@@ -13,73 +13,73 @@
   "tiles": [
     {
       "x": 10.0,
-      "y": 270.0,
+      "y": 330.0,
       "width": 370.0,
-      "height": 250.0,
+      "height": 310.0,
       "widget_type": "CPUGraphWidget",
       "core_id": "core1"
     },
     {
       "x": 390.0,
-      "y": 400.0,
+      "y": 490.0,
       "width": 190.0,
-      "height": 120.0,
+      "height": 150.0,
       "widget_type": "CPUGraphWidget",
       "core_id": "core2"
     },
     {
       "x": 590.0,
-      "y": 140.0,
+      "y": 170.0,
       "width": 190.0,
-      "height": 120.0,
+      "height": 150.0,
       "widget_type": "CPUGraphWidget",
       "core_id": "core3"
     },
     {
       "x": 790.0,
-      "y": 140.0,
+      "y": 170.0,
       "width": 190.0,
-      "height": 120.0,
+      "height": 150.0,
       "widget_type": "CPUGraphWidget",
       "core_id": "core4"
     },
     {
       "x": 990.0,
-      "y": 140.0,
+      "y": 170.0,
       "width": 190.0,
-      "height": 120.0,
+      "height": 150.0,
       "widget_type": "CPUGraphWidget",
       "core_id": "core5"
     },
     {
       "x": 390.0,
-      "y": 140.0,
+      "y": 170.0,
       "width": 190.0,
-      "height": 120.0,
+      "height": 150.0,
       "widget_type": "CPUGraphWidget",
       "core_id": "core6"
     },
     {
       "x": 590.0,
-      "y": 400.0,
+      "y": 490.0,
       "width": 190.0,
-      "height": 120.0,
+      "height": 150.0,
       "widget_type": "CPUGraphWidget",
       "core_id": "core7"
     },
     {
       "x": 790.0,
-      "y": 400.0,
+      "y": 490.0,
       "width": 190.0,
-      "height": 120.0,
+      "height": 150.0,
       "widget_type": "CPUGraphWidget",
       "core_id": "core8"
     },
     {
       "x": 990.0,
-      "y": 400.0,
+      "y": 490.0,
       "width": 190.0,
-      "height": 120.0,
+      "height": 150.0,
       "widget_type": "CPUGraphWidget",
       "core_id": "core9"
     },
@@ -87,7 +87,7 @@
       "x": 10.0,
       "y": 10.0,
       "width": 370.0,
-      "height": 250.0,
+      "height": 310.0,
       "widget_type": "CircularGaugeWidget",
       "core_id": "core1"
     },
@@ -95,7 +95,7 @@
       "x": 390.0,
       "y": 10.0,
       "width": 190.0,
-      "height": 120.0,
+      "height": 150.0,
       "widget_type": "CircularGaugeWidget",
       "core_id": "core2"
     },
@@ -103,7 +103,7 @@
       "x": 590.0,
       "y": 10.0,
       "width": 190.0,
-      "height": 120.0,
+      "height": 150.0,
       "widget_type": "CircularGaugeWidget",
       "core_id": "core3"
     },
@@ -111,7 +111,7 @@
       "x": 790.0,
       "y": 10.0,
       "width": 190.0,
-      "height": 120.0,
+      "height": 150.0,
       "widget_type": "CircularGaugeWidget",
       "core_id": "core4"
     },
@@ -119,39 +119,39 @@
       "x": 990.0,
       "y": 10.0,
       "width": 190.0,
-      "height": 120.0,
+      "height": 150.0,
       "widget_type": "CircularGaugeWidget",
       "core_id": "core4"
     },
     {
       "x": 390.0,
-      "y": 270.0,
+      "y": 330.0,
       "width": 190.0,
-      "height": 120.0,
+      "height": 150.0,
       "widget_type": "CircularGaugeWidget",
       "core_id": "core6"
     },
     {
       "x": 590.0,
-      "y": 270.0,
+      "y": 330.0,
       "width": 190.0,
-      "height": 120.0,
+      "height": 150.0,
       "widget_type": "CircularGaugeWidget",
       "core_id": "core7"
     },
     {
       "x": 790.0,
-      "y": 270.0,
+      "y": 330.0,
       "width": 190.0,
-      "height": 120.0,
+      "height": 150.0,
       "widget_type": "CircularGaugeWidget",
       "core_id": "core8"
     },
     {
       "x": 990.0,
-      "y": 270.0,
+      "y": 330.0,
       "width": 190.0,
-      "height": 120.0,
+      "height": 150.0,
       "widget_type": "CircularGaugeWidget",
       "core_id": "core9"
     }
