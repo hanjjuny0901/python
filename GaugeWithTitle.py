@@ -3,8 +3,8 @@ from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QVBoxLayout
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPalette, QColor
 
-from circular_gauge import (
-    CircularGauge,
+from CircularGaugeWidget import (
+    CircularGaugeWidget,  #        CircularGauge 클래스를 CircularGaugeWidget.py에서 임포트
 )  # 첨부파일의 CircularGauge 클래스를 paste.py에 저장했다고 가정
 
 
@@ -18,12 +18,12 @@ class GaugeWithTitle(QWidget):
         self.setStyleSheet("background: transparent;")
 
         # 타이틀 라벨
-        self.title_label = QLabel(title)
-        self.title_label.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
-        self.title_label.setStyleSheet(
-            "color: white; font-size: 13px; font-weight: bold;"
-        )
-        layout.addWidget(self.title_label)
+        # self.title_label = QLabel(title)
+        # self.title_label.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
+        # self.title_label.setStyleSheet(
+        #     "color: white; font-size: 13px; font-weight: bold;"
+        # )
+        # layout.addWidget(self.title_label)
 
         # CircularGauge 위젯
         self.gauge = CircularGauge(title="", value=75)

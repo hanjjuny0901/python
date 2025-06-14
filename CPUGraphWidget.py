@@ -1,18 +1,33 @@
-import sys
+from PyQt5.QtCore import QTimer, Qt, pyqtSignal
+from PyQt5.QtWidgets import QWidget, QVBoxLayout
 import psutil
 import numpy as np
-from PyQt5.QtCore import QTimer, Qt
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-import qdarktheme
+from SystemResourceViewModel import SystemResourceViewModel  # ✅ ViewModel import 추가
 
 
 class CPUGraphWidget(QWidget):
-    def __init__(self, title="CPU Usage", num_points=60, parent=None):
+    def __init__(
+        self,
+        core_id: str = None,  # ✅ core_id 추가
+        viewmodel: SystemResourceViewModel = None,  # ✅ viewmodel 추가
+        title: str = "CPU Usage",
+        num_points: int = 60,
+        parent=None,
+    ):
         super().__init__(parent)
+        self.core_id = core_id  # ✅ core_id 저장
+        self.viewmodel = viewmodel  # ✅ viewmodel 저장
         self.num_points = num_points
         self.data = [0] * num_points
+
+        # ✅ title이 없으면 core_id 기반으로 자동 생성
+        if core_id and not title:
+            self.title = f"CPU {core_id} Usage"
+        else:
+            self.title = title
+
         self.setAttribute(Qt.WA_TranslucentBackground)
         self.setAttribute(Qt.WA_TransparentForMouseEvents, True)
         self.setStyleSheet("background: transparent;")
@@ -39,17 +54,16 @@ class CPUGraphWidget(QWidget):
         self.ax.set_xticks(range(0, 61, 10))
         self.ax.set_yticks([0, 20, 40, 60, 80, 100])
         self.ax.set_autoscale_on(False)
-        # self.ax.set_title(title)
         self.ax.set_xlabel("Time (seconds)")
         self.ax.set_ylabel("Usage (%)")
         self.ax.grid(True, color="gray", linestyle="--", linewidth=0.5, alpha=0.7)
-
-        # ✅ tick label 폰트 크기 축소
-        self.ax.tick_params(axis="both", which="major", labelsize=6)
+        self.ax.tick_params(
+            axis="both", which="major", labelsize=6
+        )  # ✅ 폰트 크기 축소
 
         # 초기 플롯 생성
         (self.line,) = self.ax.plot(range(num_points), self.data, color="#00FF00")
-        self.fill = self.ax.fill_between(  # ✅ 채움 영역 추가
+        self.fill = self.ax.fill_between(
             range(num_points), self.data, 0, color="#00FF00", alpha=0.3
         )
 
@@ -58,17 +72,29 @@ class CPUGraphWidget(QWidget):
         layout.addWidget(self.canvas)
         self.setLayout(layout)
 
-        # 타이머 설정
-        self.timer = QTimer()
-        self.timer.timeout.connect(self.update_graph)
-        self.timer.start(1000)
+        # ✅ ViewModel 연결 (편집모드가 아닐 때만 타이머 사용)
+        if self.viewmodel and self.core_id:
+            self.viewmodel.cpu_data_updated.connect(self.on_cpu_updated)
+        else:
+            # ✅ ViewModel이 없는 경우 기존 타이머 유지 (테스트용)
+            self.timer = QTimer()
+            self.timer.timeout.connect(self.update_graph)
+            self.timer.start(1000)
 
-    def update_graph(self):
-        cpu_percent = psutil.cpu_percent()
+    def on_cpu_updated(self, new_data: dict):
+        """ViewModel에서 CPU 데이터 업데이트 시 호출"""
+        if self.core_id and self.core_id in new_data:
+            cpu_value = new_data[self.core_id]
+            self.update_graph(cpu_value)
+
+    def update_graph(self, cpu_value: float = None):
+        """외부에서 값을 전달받거나 psutil로 직접 측정"""
+        # ✅ 값이 없으면 psutil로 측정 (테스트용)
+        if cpu_value is None:
+            cpu_value = psutil.cpu_percent()
+
         self.data.pop(0)
-        self.data.append(cpu_percent)
-
-        # 라인 업데이트
+        self.data.append(cpu_value)
         self.line.set_ydata(self.data)
 
         # 채움 영역 업데이트
@@ -77,16 +103,37 @@ class CPUGraphWidget(QWidget):
         verts = np.vstack(
             [np.column_stack((x, y)), np.column_stack((x[::-1], np.zeros_like(x)))]
         )
-        self.fill.set_verts([verts])  # ✅ 채움 영역 갱신
-
+        self.fill.set_verts([verts])
         self.canvas.draw_idle()
 
 
+# 테스트 코드
 if __name__ == "__main__":
+    from PyQt5.QtWidgets import QApplication
+    import sys
+    import qdarktheme
+
     app = QApplication(sys.argv)
     qdarktheme.setup_theme("dark")
 
-    widget = CPUGraphWidget("CPU Usage")
+    # ✅ ViewModel과 연동 테스트
+    from SystemResourceModel import SystemResourceModel
+    from SystemResourceViewModel import SystemResourceViewModel
+
+    model = SystemResourceModel()
+    viewmodel = SystemResourceViewModel(model)
+
+    widget = CPUGraphWidget(
+        core_id="core1", viewmodel=viewmodel, title="Custom CPU Usage"
+    )
     widget.resize(200, 200)
     widget.show()
+
+    # 테스트 데이터 전송 (ViewModel 시뮬레이션)
+    test_timer = QTimer()
+    test_timer.timeout.connect(
+        lambda: viewmodel.update_cpu_values({"core1": np.random.randint(0, 100)})
+    )
+    test_timer.start(1000)
+
     sys.exit(app.exec_())

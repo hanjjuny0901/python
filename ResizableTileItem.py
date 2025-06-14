@@ -15,12 +15,18 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import Qt, QRectF, QPointF
 from PyQt5.QtGui import QBrush, QColor, QPainter, QPen, QPainterPath, QFont, QRegion
+from PyQt5.QtWidgets import QGraphicsSimpleTextItem
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
+from SystemResourceModel import SystemResourceModel
+from SystemResourceViewModel import SystemResourceViewModel
+
+from CircularGaugeWidget import CircularGaugeWidget  # CircularGaugeWidget
 from GaugeWithTitle import GaugeWithTitle
 from CPUGraphWidget import CPUGraphWidget
 import qdarktheme
+from SystemResourceModel import TileModel
 
 
 class ResizableTileItem(QGraphicsRectItem):
@@ -46,6 +52,7 @@ class ResizableTileItem(QGraphicsRectItem):
         scene_rect=None,
         border_width=2,
         corner_radius=20,
+        tile_model: TileModel = None,
     ):
         w = grid_size * cols
         h = grid_size * rows
@@ -67,6 +74,7 @@ class ResizableTileItem(QGraphicsRectItem):
         self.resizing = False
         self.resize_handle_size = 20
         self.all_tiles = all_tiles or []
+        self.tile_model = tile_model
         self.proxy_inset = 10
         self.resize_direction = self.HANDLE_NONE
 
@@ -81,15 +89,58 @@ class ResizableTileItem(QGraphicsRectItem):
         self.proxy.setAcceptHoverEvents(False)  # 프록시 위젯이 hover 이벤트를 받지 않게
         self.setZValue(1)  # 타일이 ProxyWidget보다 위에 오도록
         self.proxy.setZValue(0)  # 프록시 위젯은 기본값(0)
+
+        self.text_item = QGraphicsSimpleTextItem(self)
+        self.text_item.setBrush(Qt.white)  # 텍스트 색상
+        font = QFont()
+        font.setPointSize(12)
+        font.setBold(True)
+        self.text_item.setFont(font)
+        self.text_item.setText(text)
+        self.text_item.setZValue(2)  # ProxyWidget(0), 타일(1)보다 높게
+
         self._update_proxy_geometry()
+
+    # def _update_proxy_geometry(self):
+    #     tile_rect = self.rect()
+    #     self.proxy.resize(int(tile_rect.width()), int(tile_rect.height()))
+    #     self.proxy.setPos(0, 0)
+    #     widget = self.proxy.widget()
+    #     if widget:
+    #         widget.resize(int(tile_rect.width()), int(tile_rect.height()))
+
+    # def _update_proxy_geometry(self):
+    #     tile_rect = self.rect()
+    #     self.proxy.resize(int(tile_rect.width()), int(tile_rect.height()))
+    #     self.proxy.setPos(0, 0)
+    #     widget = self.proxy.widget()
+    #     if widget:
+    #         widget.resize(int(tile_rect.width()), int(tile_rect.height()))
+    #     # 텍스트 위치를 타일 하단 중앙에 배치
+    #     text_rect = self.text_item.boundingRect()
+    #     x = (tile_rect.width() - text_rect.width()) / 2
+    #     y = 10  # 하단에서 8px 위
+    #     self.text_item.setPos(x, y)
 
     def _update_proxy_geometry(self):
         tile_rect = self.rect()
-        self.proxy.resize(int(tile_rect.width()), int(tile_rect.height()))
-        self.proxy.setPos(0, 0)
+        # ✅ float → int 변환
+        widget_width = int(tile_rect.width() - 20)
+        widget_height = int(tile_rect.height() - 20)
+
+        self.proxy.resize(widget_width, widget_height)
+        self.proxy.setPos(10, 10)
+
         widget = self.proxy.widget()
         if widget:
-            widget.resize(int(tile_rect.width()), int(tile_rect.height()))
+            widget.resize(widget_width, widget_height)
+            widget.updateGeometry()
+
+        # 텍스트 위치 재조정
+        text_rect = self.text_item.boundingRect()
+        x = (tile_rect.width() - text_rect.width()) / 2
+        y = 4
+        self.text_item.setPos(x, y)
 
     def paint(self, painter, option, widget=None):
         rect = self.rect()
@@ -108,11 +159,11 @@ class ResizableTileItem(QGraphicsRectItem):
         painter.setPen(QPen(QColor(100, 100, 100, 180), self.border_width))
         painter.drawPath(path)
 
-        # 3. 텍스트
-        painter.setPen(Qt.white)
-        painter.drawText(
-            rect.adjusted(0, 0, 0, -20), Qt.AlignBottom | Qt.AlignHCenter, self.text
-        )
+        # # 3. 텍스트
+        # painter.setPen(Qt.white)
+        # painter.drawText(
+        #     rect.adjusted(0, 0, 0, -20), Qt.AlignBottom | Qt.AlignHCenter, self.text
+        # )
 
         # 4. 선택 표시 (드래그/다중 선택 시)
         if self.isSelected():
@@ -342,6 +393,18 @@ class ResizableTileItem(QGraphicsRectItem):
         self.resizing = False
         self.resizing_direction = self.HANDLE_NONE
         self.setCursor(Qt.ArrowCursor)
+
+        # ✅ 선택된 모든 타일 모델 업데이트
+        scene = self.scene()
+        if scene:
+            selected_items = scene.selectedItems()
+            for item in selected_items:
+                if isinstance(item, ResizableTileItem):
+                    item.tile_model.x = item.scenePos().x()
+                    item.tile_model.y = item.scenePos().y()
+                    item.tile_model.width = item.rect().width()
+                    item.tile_model.height = item.rect().height()
+
         super().mouseReleaseEvent(event)
 
     def itemChange(self, change, value):
@@ -388,161 +451,36 @@ class ResizableTileItem(QGraphicsRectItem):
                 canvas.setFocusPolicy(Qt.NoFocus)
 
     def get_state(self):
-        return {
-            "x": float(self.pos().x()),
-            "y": float(self.pos().y()),
-            "width": float(self.rect().width()),
-            "height": float(self.rect().height()),
-            "text": self.text,
-        }
+        if hasattr(self, "viewmodel"):
+            self.viewmodel.set_pos(self.scenePos().x(), self.scenePos().y())
+            self.viewmodel.set_size(self.rect().width(), self.rect().height())
+            self.viewmodel.set_text(self.text)
+            return self.viewmodel.model.to_dict()
+        else:
+            # fallback
+            scene_pos = self.scenePos()
+            return {
+                "x": float(scene_pos.x()),
+                "y": float(scene_pos.y()),
+                "width": float(self.rect().width()),
+                "height": float(self.rect().height()),
+                "text": self.text,
+            }
 
     def set_state(self, state):
-        self.setRect(0, 0, state["width"], state["height"])
-        self.setPos(state["x"], state["y"])
-        self.text = state.get("text", self.text)
-        self._update_proxy_geometry()
-
-
-class SystemResourceView(QWidget):
-    def __init__(self):
-        super().__init__()
-        main_layout = QVBoxLayout(self)
-        self.scene = QGraphicsScene()
-        self.view = QGraphicsView(self.scene)
-        self.view.setFrameShape(QGraphicsView.NoFrame)
-        self.view.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.view.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.view.setStyleSheet("background: transparent; border: none;")
-        self.view.setAttribute(Qt.WA_TranslucentBackground)
-        self.view.setRenderHint(QPainter.Antialiasing)
-        self.view.setDragMode(QGraphicsView.RubberBandDrag)
-        self.view.viewport().installEventFilter(self)
-        main_layout.addWidget(self.view)
-        self.edit_mode = False
-        self.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.customContextMenuRequested.connect(self.show_context_menu)
-        self.grid_size = 10
-        self.tiles = []
-        self.scene.setSceneRect(0, 0, 800, 600)
-        self.add_grid_lines()
-        self.create_tiles()
-        self.load_layout()
-        self.update_minimum_size()
-        self.resize(
-            int(self.scene.sceneRect().width()) + 10,
-            int(self.scene.sceneRect().height()) + 10,
-        )
-
-    def eventFilter(self, obj, event):
-        if obj is self.view.viewport() and event.type() == event.Resize:
-            self.add_grid_lines()
-        return super().eventFilter(obj, event)
-
-    def add_grid_lines(self):
-        for item in self.scene.items():
-            if isinstance(item, QGraphicsLineItem):
-                self.scene.removeItem(item)
-        if self.edit_mode:
-            viewport = self.view.viewport()
-            width = viewport.width()
-            height = viewport.height()
-            self.scene.setSceneRect(0, 0, width, height)
-            x = 0
-            while x < width:
-                line = QGraphicsLineItem(x, 0, x, height)
-                line.setPen(QColor(200, 200, 200))
-                self.scene.addItem(line)
-                x += self.grid_size
-            y = 0
-            while y < height:
-                line = QGraphicsLineItem(0, y, width, y)
-                line.setPen(QColor(200, 200, 200))
-                self.scene.addItem(line)
-                y += self.grid_size
-
-    def show_context_menu(self, pos):
-        menu = QMenu()
-        edit_action = menu.addAction(
-            "Edit Mode On" if not self.edit_mode else "Edit Mode Off"
-        )
-        edit_action.triggered.connect(self.toggle_edit_mode)
-        menu.addSeparator()
-        save_action = menu.addAction("저장")
-        save_action.triggered.connect(self.save_layout)
-        load_action = menu.addAction("불러오기")
-        load_action.triggered.connect(self.load_layout)
-        menu.exec_(self.mapToGlobal(pos))
-
-    def toggle_edit_mode(self):
-        self.edit_mode = not self.edit_mode
-        self.update_grid_and_tiles()
-
-    def update_grid_and_tiles(self):
-        self.add_grid_lines()
-        for tile in self.tiles:
-            tile.set_enabled(self.edit_mode)
-
-    def create_tiles(self):
-        grid_cols = 3
-        grid_rows = 6
-        widgets = []
-        widgets.extend([GaugeWithTitle(f"CPU Usage {i+1}") for i in range(9)])
-        widgets.extend([CPUGraphWidget(f"CPU Graph {i-8}") for i in range(9, 18)])
-
-        self.tiles.clear()
-        for idx, widget in enumerate(widgets):
-            row = idx // grid_cols
-            col = idx % grid_cols
-            x = col * self.grid_size * 10
-            y = row * self.grid_size * 10
-            tile = ResizableTileItem(
-                self.grid_size,
-                cols=10,
-                rows=10,
-                widget=widget,
-                color=QColor(80, 80, 80, 180),
-                text=f"Widget {idx+1}",
-                all_tiles=self.tiles,
+        if hasattr(self, "viewmodel"):
+            self.viewmodel.model = SystemResourceModel.from_dict(state)
+            self.setRect(
+                0, 0, self.viewmodel.get_size()[0], self.viewmodel.get_size()[1]
             )
-            self.scene.addItem(tile)
-            tile.setPos(x, y)
-            tile.set_enabled(self.edit_mode)
-            self.tiles.append(tile)
-
-    def save_layout(self):
-        state = {
-            "edit_mode": self.edit_mode,
-            "tiles": [tile.get_state() for tile in self.tiles],
-        }
-        with open("dashboard_state.json", "w", encoding="utf-8") as f:
-            json.dump(state, f, indent=2)
-        print("저장 완료: dashboard_state.json")
-
-    def load_layout(self):
-        try:
-            with open("dashboard_state.json", "r", encoding="utf-8") as f:
-                state = json.load(f)
-            tile_states = state.get("tiles", [])
-            for tile, tile_state in zip(self.tiles, tile_states):
-                tile.set_state(tile_state)
-            self.edit_mode = state.get("edit_mode", False)
-            self.update_grid_and_tiles()
-            print("불러오기 완료: dashboard_state.json")
-        except Exception as e:
-            print(f"불러오기 실패: {e}")
-
-    def update_minimum_size(self):
-        if not self.tiles:
-            return
-        max_right = max(tile.pos().x() + tile.rect().width() for tile in self.tiles)
-        max_bottom = max(tile.pos().y() + tile.rect().height() for tile in self.tiles)
-        margin = 20
-        self.setMinimumSize(int(max_right + margin), int(max_bottom + margin))
-
-
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    qdarktheme.setup_theme("dark")
-    window = SystemResourceView()
-    window.show()
-    sys.exit(app.exec_())
+            self.setPos(self.viewmodel.get_pos()[0], self.viewmodel.get_pos()[1])
+            self.text = self.viewmodel.get_text()
+            self.text_item.setText(self.text)
+            self._update_proxy_geometry()
+        else:
+            # fallback
+            self.setRect(0, 0, int(state["width"]), int(state["height"]))
+            self.setPos(state["x"], state["y"])
+            self.text = state.get("text", self.text)
+            self.text_item.setText(self.text)
+            self._update_proxy_geometry()

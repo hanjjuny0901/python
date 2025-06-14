@@ -1,34 +1,42 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget
+from PyQt5.QtWidgets import QApplication, QWidget, QSizePolicy
 from PyQt5.QtCore import Qt, QRectF
 from PyQt5.QtGui import QBrush, QColor, QPainter, QPen, QPainterPath, QFont, QPalette
+from typing import Optional
+from SystemResourceViewModel import SystemResourceViewModel  # ViewModel 임포트
 
 
-class CircularGauge(QWidget):
+class CircularGaugeWidget(QWidget):
     def __init__(
         self,
-        title="Circular Gauge",
-        min_value=0.0,
-        max_value=100.0,
-        value=50.0,
-        steps=1,
-        start_angle=-210.0,
-        end_angle=30.0,
+        core_id: str,  # ✅ core_id 추가
+        viewmodel: SystemResourceViewModel,  # ✅ viewmodel 추가
+        title: Optional[str] = None,
+        min_value: float = 0.0,
+        max_value: float = 100.0,
+        steps: int = 1,
+        start_angle: float = -210.0,
+        end_angle: float = 30.0,
         outer_circle_pen_color=QColor(50, 50, 50),
         outer_circle_brush_color=QColor(30, 30, 30),
-        outer_circle_thickness=50,
+        outer_circle_thickness=12,
         inner_ring_pen_color=QColor(70, 70, 70),
         inner_ring_brush_color=QColor(40, 40, 40),
         inner_circle_brush_color=QColor(20, 20, 20),
-        number_font_size=12,
+        number_font_size=10,
         number_font_family="Arial",
         parent=None,
     ):
         super().__init__(parent)
-        self.title = title
+        self.core_id = core_id  # ✅ core_id 저장
+        self.viewmodel = viewmodel  # ✅ viewmodel 저장
+
+        # ✅ title이 없으면 core_id 기반으로 자동 생성
+        self.title = title if title else f"CPU {core_id}"
+
         self.min_value = min_value
         self.max_value = max_value
-        self.value = value
+        self.value = 0.0  # ✅ 초기값 0으로 설정 (ViewModel에서 업데이트)
         self.steps = steps
         self.start_angle = start_angle
         self.end_angle = end_angle
@@ -42,6 +50,16 @@ class CircularGauge(QWidget):
         self.inner_circle_brush_color = inner_circle_brush_color
         self.number_font_size = number_font_size
         self.number_font_family = number_font_family
+        self.setAttribute(Qt.WA_TranslucentBackground)
+        self.setStyleSheet("background: transparent;")
+
+        # ✅ ViewModel의 데이터 업데이트 신호 연결
+        self.viewmodel.cpu_data_updated.connect(self.on_cpu_updated)
+
+    def on_cpu_updated(self, new_data: dict):
+        """ViewModel에서 CPU 데이터 업데이트 시 호출"""
+        if self.core_id in new_data:
+            self.setValue(new_data[self.core_id])
 
     def setValue(self, value):
         self.value = max(self.min_value, min(self.max_value, value))
@@ -52,82 +70,62 @@ class CircularGauge(QWidget):
             painter = QPainter(self)
             painter.setRenderHint(QPainter.Antialiasing)
             rect = self.rect()
-            center = rect.center()
-            # 동적으로 두께 결정 (최소 5픽셀, 전체 크기의 6%)
-            min_dim = min(rect.width(), rect.height())
-            self.outer_circle_thickness = max(5, int(min_dim * 0.15))
-            radius = min(rect.width(), rect.height()) / 2 - self.outer_circle_thickness
 
-            self.drawTitle(painter, rect, radius, center)
+            # ✅ 타일 높이의 20%를 상단 여백으로 사용 (동적 계산)
+            top_margin = int(rect.height() * 0.2)
+            content_rect = rect.adjusted(0, top_margin, 0, 0)
+
+            # ✅ 콘텐츠 영역 기반으로 반지름 계산
+            center = content_rect.center()
+            radius = (content_rect.height() - 20) // 2  # 20px 패딩
+
+            # ✅ 동적으로 두께 계산 (반지름의 20%, 최소 5px)
+            self.outer_circle_thickness = max(5, int(radius * 0.3))
+
             painter.translate(center)
+            self.drawInnerArc(painter, radius)
             self.drawOuterArc(painter, radius)
-            self.drawOuterArc2(painter, radius)
             self.drawCenterPercentage(painter, radius)
         except Exception as e:
             print(f"Error in paintEvent: {e}")
 
-    def drawOuterArc(self, painter, radius):
+    def drawInnerArc(self, painter, radius):
         path = QPainterPath()
         outer_radius = radius
         inner_radius = radius - self.outer_circle_thickness
         total_angle = self.angle_range
         filled_angle = total_angle * (self.value / 100)
-        green_limit = total_angle * 0.8
-        yellow_limit = total_angle * 0.1
-        red_limit = total_angle * 0.1
-        green_angle = min(filled_angle, green_limit)
-        yellow_angle = min(max(filled_angle - green_limit, 0), yellow_limit)
-        red_angle = max(filled_angle - green_limit - yellow_limit, 0)
-        current_start = -self.start_angle
 
-        bg_path = QPainterPath()
-        bg_rect = QRectF(
-            -outer_radius, -outer_radius, 2 * outer_radius, 2 * outer_radius
+        # 구간별 색상 결정 (80% 초록, 80~90% 노랑, 90% 이상 빨강)
+        if self.value <= 80:
+            color = QColor(0, 200, 0, 180)  # 초록
+        elif 80 < self.value <= 90:
+            color = QColor(220, 200, 0, 180)  # 노랑
+        else:
+            color = QColor(220, 50, 50, 200)  # 빨강
+
+        # 단일 아크 생성
+        path.arcMoveTo(
+            QRectF(-outer_radius, -outer_radius, 2 * outer_radius, 2 * outer_radius),
+            -self.start_angle,
         )
-        bg_path.arcMoveTo(bg_rect, current_start)
-        bg_path.arcTo(bg_rect, current_start, -total_angle)
-        bg_path.lineTo(bg_path.currentPosition())
-        inner_rect = QRectF(
-            -inner_radius, -inner_radius, 2 * inner_radius, 2 * inner_radius
+        path.arcTo(
+            QRectF(-outer_radius, -outer_radius, 2 * outer_radius, 2 * outer_radius),
+            -self.start_angle,
+            -filled_angle,
         )
-        bg_path.arcTo(inner_rect, current_start - total_angle, total_angle)
+        path.lineTo(path.currentPosition())
+        path.arcTo(
+            QRectF(-inner_radius, -inner_radius, 2 * inner_radius, 2 * inner_radius),
+            -self.start_angle - filled_angle,
+            filled_angle,
+        )
+
         painter.setPen(Qt.NoPen)
-        painter.setBrush(self.outer_circle_brush_color)
-        painter.drawPath(bg_path)
+        painter.setBrush(color)
+        painter.drawPath(path)
 
-        # 초록색 구간
-        if green_angle > 0:
-            green_path = QPainterPath()
-            green_path.arcMoveTo(bg_rect, current_start)
-            green_path.arcTo(bg_rect, current_start, -green_angle)
-            green_path.lineTo(green_path.currentPosition())
-            green_path.arcTo(inner_rect, current_start - green_angle, green_angle)
-            painter.setBrush(QColor(0, 200, 0, 180))
-            painter.drawPath(green_path)
-            current_start -= green_angle
-
-        # 노란색 구간
-        if yellow_angle > 0:
-            yellow_path = QPainterPath()
-            yellow_path.arcMoveTo(bg_rect, current_start)
-            yellow_path.arcTo(bg_rect, current_start, -yellow_angle)
-            yellow_path.lineTo(yellow_path.currentPosition())
-            yellow_path.arcTo(inner_rect, current_start - yellow_angle, yellow_angle)
-            painter.setBrush(QColor(220, 200, 0, 180))
-            painter.drawPath(yellow_path)
-            current_start -= yellow_angle
-
-        # 빨간색 구간
-        if red_angle > 0:
-            red_path = QPainterPath()
-            red_path.arcMoveTo(bg_rect, current_start)
-            red_path.arcTo(bg_rect, current_start, -red_angle)
-            red_path.lineTo(red_path.currentPosition())
-            red_path.arcTo(inner_rect, current_start - red_angle, red_angle)
-            painter.setBrush(QColor(220, 50, 50, 200))
-            painter.drawPath(red_path)
-
-    def drawOuterArc2(self, painter, radius):
+    def drawOuterArc(self, painter, radius):
         outer_radius = radius + self.outer_circle_thickness / 3 + 3
         inner_radius = radius + 3
         total_angle = self.angle_range
@@ -185,7 +183,13 @@ class CircularGauge(QWidget):
         )
 
     def drawCenterPercentage(self, painter, radius):
-        painter.setPen(QColor(220, 220, 220))
+        if self.value <= 80:
+            color = QColor(0, 200, 0, 180)  # 초록
+        elif 80 < self.value <= 90:
+            color = QColor(220, 200, 0, 180)  # 노랑
+        else:
+            color = QColor(220, 50, 50, 200)  # 빨강
+        painter.setPen(color)
         # 폰트 크기를 위젯 크기에 맞게 동적으로 계산
         percent_font_size = max(10, int(radius * 0.2))  # 더 크게!
         font = QFont(self.number_font_family, percent_font_size)
