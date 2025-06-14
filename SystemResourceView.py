@@ -243,7 +243,7 @@ class SystemResourceView(QWidget):
             return
         max_right = max(tile.pos().x() + tile.rect().width() for tile in self.tiles)
         max_bottom = max(tile.pos().y() + tile.rect().height() for tile in self.tiles)
-        margin = 20
+        margin = 10
         self.setMinimumSize(int(max_right + margin), int(max_bottom + margin))
 
     def init_data_timer(self):

@@ -33,7 +33,7 @@ class CPUGraphWidget(QWidget):
         self.setStyleSheet("background: transparent;")
 
         # 200x200 픽셀로 지정 (dpi=100, figsize=2x2인치)
-        self.figure = Figure(figsize=(2, 2), dpi=100, facecolor="#2e2e2e")
+        self.figure = Figure(figsize=(2, 2), dpi=80, facecolor="#2e2e2e")
         self.canvas = FigureCanvas(self.figure)
         self.ax = self.figure.add_subplot(111)
 
@@ -56,9 +56,9 @@ class CPUGraphWidget(QWidget):
         self.ax.set_autoscale_on(False)
         self.ax.set_xlabel("Time (seconds)")
         self.ax.set_ylabel("Usage (%)")
-        self.ax.grid(True, color="gray", linestyle="--", linewidth=0.5, alpha=0.7)
+        self.ax.grid(True, color="gray", linestyle="--", linewidth=0.4, alpha=0.7)
         self.ax.tick_params(
-            axis="both", which="major", labelsize=6
+            axis="both", which="major", labelsize=7
         )  # ✅ 폰트 크기 축소
 
         # 초기 플롯 생성

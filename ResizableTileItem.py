@@ -51,7 +51,7 @@ class ResizableTileItem(QGraphicsRectItem):
         all_tiles=None,
         scene_rect=None,
         border_width=2,
-        corner_radius=20,
+        corner_radius=10,
         tile_model: TileModel = None,
     ):
         w = grid_size * cols
@@ -72,7 +72,7 @@ class ResizableTileItem(QGraphicsRectItem):
         self.setAcceptHoverEvents(True)
         self.text = text
         self.resizing = False
-        self.resize_handle_size = 20
+        self.resize_handle_size = 10
         self.all_tiles = all_tiles or []
         self.tile_model = tile_model
         self.proxy_inset = 10
@@ -101,35 +101,14 @@ class ResizableTileItem(QGraphicsRectItem):
 
         self._update_proxy_geometry()
 
-    # def _update_proxy_geometry(self):
-    #     tile_rect = self.rect()
-    #     self.proxy.resize(int(tile_rect.width()), int(tile_rect.height()))
-    #     self.proxy.setPos(0, 0)
-    #     widget = self.proxy.widget()
-    #     if widget:
-    #         widget.resize(int(tile_rect.width()), int(tile_rect.height()))
-
-    # def _update_proxy_geometry(self):
-    #     tile_rect = self.rect()
-    #     self.proxy.resize(int(tile_rect.width()), int(tile_rect.height()))
-    #     self.proxy.setPos(0, 0)
-    #     widget = self.proxy.widget()
-    #     if widget:
-    #         widget.resize(int(tile_rect.width()), int(tile_rect.height()))
-    #     # 텍스트 위치를 타일 하단 중앙에 배치
-    #     text_rect = self.text_item.boundingRect()
-    #     x = (tile_rect.width() - text_rect.width()) / 2
-    #     y = 10  # 하단에서 8px 위
-    #     self.text_item.setPos(x, y)
-
     def _update_proxy_geometry(self):
         tile_rect = self.rect()
         # ✅ float → int 변환
-        widget_width = int(tile_rect.width() - 20)
-        widget_height = int(tile_rect.height() - 20)
+        widget_width = int(tile_rect.width())
+        widget_height = int(tile_rect.height())
 
         self.proxy.resize(widget_width, widget_height)
-        self.proxy.setPos(10, 10)
+        self.proxy.setPos(0, 0)
 
         widget = self.proxy.widget()
         if widget:
