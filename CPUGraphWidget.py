@@ -37,6 +37,14 @@ class CPUGraphWidget(QWidget):
         self.canvas = FigureCanvas(self.figure)
         self.ax = self.figure.add_subplot(111)
 
+        # ✅ 서브플롯 여백 최소화
+        self.figure.subplots_adjust(
+            left=0.12,   # 좌측 여백 12%
+            right=0.95,  # 우측 여백 2%
+            bottom=0.15, # 하단 여백 15%
+            top=0.9      # 상단 여백 10%
+        )
+
         # 그래프 스타일 설정
         self.ax.set_facecolor("#2e2e2e")
         self.ax.tick_params(axis="both", colors="white")
@@ -69,6 +77,8 @@ class CPUGraphWidget(QWidget):
 
         # 레이아웃
         layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)  # ✅ 여백 제거
+        layout.setSpacing(0)
         layout.addWidget(self.canvas)
         self.setLayout(layout)
 
@@ -81,6 +91,14 @@ class CPUGraphWidget(QWidget):
             self.timer.timeout.connect(self.update_graph)
             self.timer.start(1000)
 
+    # def resizeEvent(self, event):
+    #     """위젯 크기 변경 시 Figure 크기 동기화"""
+    #     super().resizeEvent(event)
+    #     width_inch = self.width() / self.figure.dpi
+    #     height_inch = self.height() / self.figure.dpi
+    #     self.figure.set_size_inches(width_inch, height_inch)
+    #     self.canvas.draw()
+        
     def on_cpu_updated(self, new_data: dict):
         """ViewModel에서 CPU 데이터 업데이트 시 호출"""
         if self.core_id and self.core_id in new_data:
