@@ -159,16 +159,16 @@
       {
         "x": 1190.0,
         "y": 0.0,
-        "width": 380.0,
-        "height": 310.0,
+        "width": 380,
+        "height": 310,
         "widget_type": "CircularGaugeWidget",
         "core_id": "momory"
       },
       {
         "x": 1190.0,
         "y": 320.0,
-        "width": 380.0,
-        "height": 310.0,
+        "width": 380,
+        "height": 310,
         "widget_type": "CPUGraphWidget",
         "core_id": "momory"
       }

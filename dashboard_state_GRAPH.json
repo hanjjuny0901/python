@@ -1,0 +1,279 @@
+{
+  "AP1": {
+    "cpu_cores": {
+      "core1": 75.0,
+      "core2": 68.0,
+      "core3": 72.0,
+      "core4": 81.0,
+      "core5": 65.0,
+      "core6": 89.0,
+      "core7": 78.0,
+      "core8": 83.0,
+      "core9": 70.0
+    },
+    "tiles": [
+      {
+        "x": 0.0,
+        "y": 0.0,
+        "width": 380.0,
+        "height": 310.0,
+        "widget_type": "CPUGraphWidget",
+        "core_id": "core1"
+      },
+      {
+        "x": 390.0,
+        "y": 0.0,
+        "width": 190.0,
+        "height": 150.0,
+        "widget_type": "CPUGraphWidget",
+        "core_id": "core2"
+      },
+      {
+        "x": 590.0,
+        "y": 0.0,
+        "width": 190.0,
+        "height": 150.0,
+        "widget_type": "CPUGraphWidget",
+        "core_id": "core3"
+      },
+      {
+        "x": 790.0,
+        "y": 0.0,
+        "width": 190.0,
+        "height": 150.0,
+        "widget_type": "CPUGraphWidget",
+        "core_id": "core4"
+      },
+      {
+        "x": 990.0,
+        "y": 0.0,
+        "width": 190.0,
+        "height": 150.0,
+        "widget_type": "CPUGraphWidget",
+        "core_id": "core5"
+      },
+      {
+        "x": 390.0,
+        "y": 160.0,
+        "width": 190.0,
+        "height": 150.0,
+        "widget_type": "CPUGraphWidget",
+        "core_id": "core6"
+      },
+      {
+        "x": 590.0,
+        "y": 160.0,
+        "width": 190.0,
+        "height": 150.0,
+        "widget_type": "CPUGraphWidget",
+        "core_id": "core7"
+      },
+      {
+        "x": 790.0,
+        "y": 160.0,
+        "width": 190.0,
+        "height": 150.0,
+        "widget_type": "CPUGraphWidget",
+        "core_id": "core8"
+      },
+      {
+        "x": 990.0,
+        "y": 160.0,
+        "width": 190.0,
+        "height": 150.0,
+        "widget_type": "CPUGraphWidget",
+        "core_id": "core9"
+      },
+      {
+        "x": 1190.0,
+        "y": 0.0,
+        "width": 380.0,
+        "height": 310.0,
+        "widget_type": "CPUGraphWidget",
+        "core_id": "momory"
+      }
+    ]
+  },
+  "AP2": {
+    "cpu_cores": {
+      "core1": 75.0,
+      "core2": 68.0,
+      "core3": 72.0,
+      "core4": 81.0,
+      "core5": 65.0,
+      "core6": 89.0,
+      "core7": 78.0,
+      "core8": 83.0,
+      "core9": 70.0
+    },
+    "tiles": [
+      {
+        "x": 0.0,
+        "y": 0.0,
+        "width": 380,
+        "height": 310,
+        "widget_type": "CPUGraphWidget",
+        "core_id": "core1"
+      },
+      {
+        "x": 390.0,
+        "y": 0.0,
+        "width": 190,
+        "height": 150,
+        "widget_type": "CPUGraphWidget",
+        "core_id": "core2"
+      },
+      {
+        "x": 590.0,
+        "y": 0.0,
+        "width": 190,
+        "height": 150,
+        "widget_type": "CPUGraphWidget",
+        "core_id": "core3"
+      },
+      {
+        "x": 790.0,
+        "y": 0.0,
+        "width": 190,
+        "height": 150,
+        "widget_type": "CPUGraphWidget",
+        "core_id": "core4"
+      },
+      {
+        "x": 990.0,
+        "y": 0.0,
+        "width": 190,
+        "height": 150,
+        "widget_type": "CPUGraphWidget",
+        "core_id": "core5"
+      },
+      {
+        "x": 390.0,
+        "y": 160.0,
+        "width": 190.0,
+        "height": 150.0,
+        "widget_type": "CPUGraphWidget",
+        "core_id": "core6"
+      },
+      {
+        "x": 590.0,
+        "y": 160.0,
+        "width": 190,
+        "height": 150,
+        "widget_type": "CPUGraphWidget",
+        "core_id": "core7"
+      },
+      {
+        "x": 790.0,
+        "y": 160.0,
+        "width": 190,
+        "height": 150,
+        "widget_type": "CPUGraphWidget",
+        "core_id": "core8"
+      },
+      {
+        "x": 990.0,
+        "y": 160.0,
+        "width": 190,
+        "height": 150,
+        "widget_type": "CPUGraphWidget",
+        "core_id": "core9"
+      },
+      {
+        "x": 1190.0,
+        "y": 0.0,
+        "width": 380,
+        "height": 310,
+        "widget_type": "CPUGraphWidget",
+        "core_id": "momory"
+      }
+    ]
+  },
+  "MCU": {
+    "cpu_cores": {
+      "core1": 75.0,
+      "core2": 68.0,
+      "core3": 72.0,
+      "core4": 81.0,
+      "core5": 65.0,
+      "core6": 89.0,
+      "core7": 78.0,
+      "core8": 83.0,
+      "core9": 70.0
+    },
+    "tiles": [
+      {
+        "x": 0.0,
+        "y": 0.0,
+        "width": 380.0,
+        "height": 310.0,
+        "widget_type": "CPUGraphWidget",
+        "core_id": "core1"
+      },
+      {
+        "x": 390.0,
+        "y": 0.0,
+        "width": 190.0,
+        "height": 150.0,
+        "widget_type": "CPUGraphWidget",
+        "core_id": "core2"
+      },
+      {
+        "x": 590.0,
+        "y": 0.0,
+        "width": 190.0,
+        "height": 150.0,
+        "widget_type": "CPUGraphWidget",
+        "core_id": "core3"
+      },
+      {
+        "x": 790.0,
+        "y": 0.0,
+        "width": 190.0,
+        "height": 150.0,
+        "widget_type": "CPUGraphWidget",
+        "core_id": "core4"
+      },
+      {
+        "x": 990.0,
+        "y": 0.0,
+        "width": 190.0,
+        "height": 150.0,
+        "widget_type": "CPUGraphWidget",
+        "core_id": "core5"
+      },
+      {
+        "x": 390.0,
+        "y": 160.0,
+        "width": 190.0,
+        "height": 150.0,
+        "widget_type": "CPUGraphWidget",
+        "core_id": "core6"
+      },
+      {
+        "x": 590.0,
+        "y": 160.0,
+        "width": 190.0,
+        "height": 150.0,
+        "widget_type": "CPUGraphWidget",
+        "core_id": "core7"
+      },
+      {
+        "x": 790.0,
+        "y": 160.0,
+        "width": 190.0,
+        "height": 150.0,
+        "widget_type": "CPUGraphWidget",
+        "core_id": "core8"
+      },
+      {
+        "x": 990.0,
+        "y": 160.0,
+        "width": 190.0,
+        "height": 150.0,
+        "widget_type": "CPUGraphWidget",
+        "core_id": "core9"
+      }
+    ]
+  }
+}
