@@ -149,7 +149,7 @@ class SystemResourceView(QWidget):
                 rows=10,
                 widget=gauge,
                 color=QColor(80, 80, 80, 180),
-                text=f"CPU {core_id}",
+                text=f"{core_id}",
                 all_tiles=self.tiles,
                 tile_model=gauge_model,
             )
@@ -177,7 +177,7 @@ class SystemResourceView(QWidget):
                 rows=10,
                 widget=graph,
                 color=QColor(80, 80, 80, 180),
-                text=f"CPU {core_id}",
+                text=f"{core_id}",
                 all_tiles=self.tiles,
                 tile_model=graph_model,
             )
@@ -220,68 +220,85 @@ class SystemResourceView(QWidget):
             self.tiles.append(color_demo_tile)
 
     def save_layout(self):
-        filename = f"dashboard_state_{self.system_name}.json"  # ✅ 시스템별 파일명
+        filename = "dashboard_state.json"  # ✅ 단일 파일 사용
+        # 기존 파일 읽기
+        if os.path.exists(filename):
+            with open(filename, "r", encoding="utf-8") as f:
+                all_data = json.load(f)
+        else:
+            all_data = {}
+
+        # 현재 시스템 데이터 갱신
+        all_data[self.system_name] = self.model.to_dict()
+
         with open(filename, "w", encoding="utf-8") as f:
-            json.dump(self.model.to_dict(), f, indent=2)
+            json.dump(all_data, f, indent=2)
 
     def load_layout(self):
-        filename = f"dashboard_state_{self.system_name}.json"  # ✅ 시스템별 파일명
+        filename = "dashboard_state.json"
         try:
-            with open(filename, "r", encoding="utf-8") as f:
-                data = json.load(f)
+            # 파일이 존재하면 전체 데이터 로드
+            if os.path.exists(filename):
+                with open(filename, "r", encoding="utf-8") as f:
+                    all_data = json.load(f)
+                # 현재 시스템에 해당하는 데이터만 추출
+                data = all_data.get(self.system_name, None)
+                if data:
+                    # 모델 갱신
+                    self.model = SystemResourceModel.from_dict(data)
+                    self.viewmodel.model = self.model
 
-            # ✅ JSON 데이터를 모델에 주입
-            self.model = SystemResourceModel.from_dict(data)
-            self.viewmodel.model = self.model  # ViewModel 업데이트
+                    # 기존 타일 제거
+                    for tile in self.tiles:
+                        self.scene.removeItem(tile)
+                    self.tiles.clear()
 
-            # 기존 타일 제거
-            for tile in self.tiles:
-                self.scene.removeItem(tile)
-            self.tiles.clear()
+                    # 새 타일 생성
+                    for tile_model in self.model.tiles:
+                        if tile_model.widget_type == "CircularGaugeWidget":
+                            widget = CircularGaugeWidget(
+                                core_id=tile_model.core_id, viewmodel=self.viewmodel
+                            )
+                        else:
+                            widget = CPUGraphWidget(
+                                core_id=tile_model.core_id, viewmodel=self.viewmodel
+                            )
+                        tile = ResizableTileItem(
+                            self.grid_size,
+                            cols=10,
+                            rows=10,
+                            widget=widget,
+                            color=QColor(80, 80, 80, 180),
+                            text=f"{tile_model.core_id}",
+                            all_tiles=self.tiles,
+                            tile_model=tile_model,
+                        )
+                        tile.setRect(0, 0, tile_model.width, tile_model.height)
+                        tile.setPos(tile_model.x, tile_model.y)
+                        tile._update_proxy_geometry()
+                        self.scene.addItem(tile)
+                        self.tiles.append(tile)
 
-            # 새 타일 생성
-            for tile_model in self.model.tiles:
-                if tile_model.widget_type == "CircularGaugeWidget":
-                    widget = CircularGaugeWidget(
-                        core_id=tile_model.core_id, viewmodel=self.viewmodel
-                    )
-                else:
-                    widget = CPUGraphWidget(
-                        core_id=tile_model.core_id, viewmodel=self.viewmodel
-                    )
+                    # 씬 크기 조정
+                    if self.model.tiles:
+                        max_x = max(tile.x + tile.width for tile in self.model.tiles)
+                        max_y = max(tile.y + tile.height for tile in self.model.tiles)
+                        self.scene.setSceneRect(0, 0, max_x + 100, max_y + 100)
 
-                tile = ResizableTileItem(
-                    self.grid_size,
-                    cols=10,
-                    rows=10,
-                    widget=widget,
-                    color=QColor(80, 80, 80, 180),
-                    text=f"CPU {tile_model.core_id}",
-                    all_tiles=self.tiles,
-                    tile_model=tile_model,
-                )
-                tile.setRect(0, 0, tile_model.width, tile_model.height)
-                tile.setPos(tile_model.x, tile_model.y)
-                tile._update_proxy_geometry()
-                self.scene.addItem(tile)
-                self.tiles.append(tile)
+                    self.update_grid_and_tiles()
+                    print(f"{self.system_name} 레이아웃 복구 성공")
+                    return  # 성공 시 종료
 
-            # 씬 크기 조정
-            if self.model.tiles:
-                max_x = max(tile.x + tile.width for tile in self.model.tiles)
-                max_y = max(tile.y + tile.height for tile in self.model.tiles)
-                self.scene.setSceneRect(0, 0, max_x + 100, max_y + 100)
-
-            self.edit_mode = data.get("edit_mode", False)
-            self.update_grid_and_tiles()
-            print("레이아웃 복구 성공")
+            # 파일이 없거나 해당 시스템 데이터가 없으면 기본 타일 생성
+            print(f"{self.system_name} 레이아웃 데이터 없음, 기본 타일 생성")
+            self.create_tiles()
 
         except Exception as e:
-            print(f"레이아웃 복구 실패: {e}")
-            self.create_tiles()  # 실패 시 기본 타일 생성
+            print(f"{self.system_name} 레이아웃 복구 실패: {e}")
+            self.create_tiles()
 
     def _has_saved_layout(self):
-        filename = f"dashboard_state_{self.system_name}.json"  # ✅ 시스템별 파일명
+        filename = f"dashboard_state.json"  # ✅ 시스템별 파일명
         return os.path.exists(filename) and os.path.getsize(filename) > 0
 
     def update_minimum_size(self):
