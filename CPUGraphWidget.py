@@ -5,6 +5,7 @@ import numpy as np
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from SystemResourceViewModel import SystemResourceViewModel  # ✅ ViewModel import 추가
+import qdarktheme
 
 
 class CPUGraphWidget(QWidget):
@@ -28,33 +29,39 @@ class CPUGraphWidget(QWidget):
         else:
             self.title = title
 
-        self.setAttribute(Qt.WA_TranslucentBackground)
-        self.setAttribute(Qt.WA_TransparentForMouseEvents, True)
-        self.setStyleSheet("background: transparent;")
+        # self.setAttribute(Qt.WA_TranslucentBackground)
+        # self.setAttribute(Qt.WA_TransparentForMouseEvents, True)
+        # self.setStyleSheet("background: transparent;")
+
+        palette = qdarktheme.load_palette()
+        bg_color = palette.window().color().name()  # 배경색
+        text_color = palette.text().color().name()  # 텍스트/축 색상
+        grid_color = palette.shadow().color().name()  # 그리드 색상
 
         # 200x200 픽셀로 지정 (dpi=100, figsize=2x2인치)
-        self.figure = Figure(figsize=(2, 2), dpi=80, facecolor="#2e2e2e")
+        self.figure = Figure(figsize=(2, 2), dpi=80, facecolor=bg_color)
         self.canvas = FigureCanvas(self.figure)
         self.ax = self.figure.add_subplot(111)
+        self.ax.set_facecolor(bg_color)  # 축 배경색
 
         # ✅ 서브플롯 여백 최소화
         self.figure.subplots_adjust(
-            left=0.12,   # 좌측 여백 12%
+            left=0.12,  # 좌측 여백 12%
             right=0.95,  # 우측 여백 2%
-            bottom=0.15, # 하단 여백 15%
-            top=0.9      # 상단 여백 10%
+            bottom=0.15,  # 하단 여백 15%
+            top=0.9,  # 상단 여백 10%
         )
 
-        # 그래프 스타일 설정
-        self.ax.set_facecolor("#2e2e2e")
-        self.ax.tick_params(axis="both", colors="white")
-        self.ax.xaxis.label.set_color("white")
-        self.ax.yaxis.label.set_color("white")
-        self.ax.title.set_color("white")
-        self.ax.spines["bottom"].set_color("white")
-        self.ax.spines["top"].set_color("white")
-        self.ax.spines["left"].set_color("white")
-        self.ax.spines["right"].set_color("white")
+        # 그래프 스타일 설정 (테마 색상 적용)
+        self.ax.tick_params(axis="both", colors=text_color)
+        self.ax.xaxis.label.set_color(text_color)
+        self.ax.yaxis.label.set_color(text_color)
+        self.ax.title.set_color(text_color)
+        self.ax.spines["bottom"].set_color(text_color)
+        self.ax.spines["top"].set_color(text_color)
+        self.ax.spines["left"].set_color(text_color)
+        self.ax.spines["right"].set_color(text_color)
+        self.ax.grid(True, color=grid_color, linestyle="--", linewidth=0.4, alpha=0.7)
 
         # 축 범위 및 tick 설정
         self.ax.set_xlim(0, 30)
@@ -98,7 +105,7 @@ class CPUGraphWidget(QWidget):
     #     height_inch = self.height() / self.figure.dpi
     #     self.figure.set_size_inches(width_inch, height_inch)
     #     self.canvas.draw()
-        
+
     def on_cpu_updated(self, new_data: dict):
         """ViewModel에서 CPU 데이터 업데이트 시 호출"""
         if self.core_id and self.core_id in new_data:

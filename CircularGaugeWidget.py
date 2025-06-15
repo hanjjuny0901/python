@@ -50,8 +50,8 @@ class CircularGaugeWidget(QWidget):
         self.inner_circle_brush_color = inner_circle_brush_color
         self.number_font_size = number_font_size
         self.number_font_family = number_font_family
-        self.setAttribute(Qt.WA_TranslucentBackground)
-        self.setStyleSheet("background: transparent;")
+        # self.setAttribute(Qt.WA_TranslucentBackground)
+        # self.setStyleSheet("background: transparent;")
 
         # ✅ ViewModel의 데이터 업데이트 신호 연결
         self.viewmodel.cpu_data_updated.connect(self.on_cpu_updated)
@@ -96,6 +96,24 @@ class CircularGaugeWidget(QWidget):
         total_angle = self.angle_range
         filled_angle = total_angle * (self.value / 100)
 
+        # 배경 아크 생성 (전체 각도)
+        bg_path = QPainterPath()
+        bg_rect = QRectF(
+            -outer_radius, -outer_radius, 2 * outer_radius, 2 * outer_radius
+        )
+        bg_path.arcMoveTo(bg_rect, -self.start_angle)
+        bg_path.arcTo(bg_rect, -self.start_angle, -total_angle)
+        bg_path.lineTo(bg_path.currentPosition())
+        inner_rect = QRectF(
+            -inner_radius, -inner_radius, 2 * inner_radius, 2 * inner_radius
+        )
+        bg_path.arcTo(inner_rect, -self.start_angle - total_angle, total_angle)
+
+        # 배경 아크 그리기 (반투명 회색)
+        painter.setPen(Qt.NoPen)
+        painter.setBrush(QColor(80, 80, 80, 180))  # 배경 색상
+        painter.drawPath(bg_path)
+
         # 구간별 색상 결정 (80% 초록, 80~90% 노랑, 90% 이상 빨강)
         if self.value <= 80:
             color = QColor(0, 200, 0, 180)  # 초록
@@ -104,26 +122,16 @@ class CircularGaugeWidget(QWidget):
         else:
             color = QColor(220, 50, 50, 200)  # 빨강
 
-        # 단일 아크 생성
-        path.arcMoveTo(
-            QRectF(-outer_radius, -outer_radius, 2 * outer_radius, 2 * outer_radius),
-            -self.start_angle,
-        )
-        path.arcTo(
-            QRectF(-outer_radius, -outer_radius, 2 * outer_radius, 2 * outer_radius),
-            -self.start_angle,
-            -filled_angle,
-        )
-        path.lineTo(path.currentPosition())
-        path.arcTo(
-            QRectF(-inner_radius, -inner_radius, 2 * inner_radius, 2 * inner_radius),
-            -self.start_angle - filled_angle,
-            filled_angle,
-        )
+        # 채워진 아크 생성
+        filled_path = QPainterPath()
+        filled_path.arcMoveTo(bg_rect, -self.start_angle)
+        filled_path.arcTo(bg_rect, -self.start_angle, -filled_angle)
+        filled_path.lineTo(filled_path.currentPosition())
+        filled_path.arcTo(inner_rect, -self.start_angle - filled_angle, filled_angle)
 
-        painter.setPen(Qt.NoPen)
+        # 채워진 아크 그리기
         painter.setBrush(color)
-        painter.drawPath(path)
+        painter.drawPath(filled_path)
 
     def drawOuterArc(self, painter, radius):
         outer_radius = radius + self.outer_circle_thickness / 3 + 3
@@ -201,37 +209,23 @@ class CircularGaugeWidget(QWidget):
 
 
 if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    # 전체 다크 테마 팔레트 적용
-    app.setStyle("Fusion")
-    palette = QPalette()
-    palette.setColor(QPalette.Window, QColor(40, 40, 40))
-    palette.setColor(QPalette.WindowText, Qt.white)
-    palette.setColor(QPalette.Base, QColor(30, 30, 30))
-    palette.setColor(QPalette.AlternateBase, QColor(40, 40, 40))
-    palette.setColor(QPalette.ToolTipBase, QColor(30, 30, 30))
-    palette.setColor(QPalette.ToolTipText, Qt.white)
-    palette.setColor(QPalette.Text, Qt.white)
-    palette.setColor(QPalette.Button, QColor(40, 40, 40))
-    palette.setColor(QPalette.ButtonText, Qt.white)
-    palette.setColor(QPalette.BrightText, Qt.red)
-    palette.setColor(QPalette.Link, QColor(42, 130, 218))
-    palette.setColor(QPalette.Highlight, QColor(42, 130, 218))
-    palette.setColor(QPalette.HighlightedText, Qt.black)
-    app.setPalette(palette)
+    import sys
+    from PyQt5.QtWidgets import QApplication
+    from PyQt5.QtGui import QPalette, QColor
+    from PyQt5.QtCore import Qt
 
-    gauge = CircularGauge(
-        title="Circular Gauge",
-        value=75,
-        steps=5,
-        outer_circle_pen_color=QColor(50, 50, 50),
-        outer_circle_brush_color=QColor(30, 30, 30),
-        inner_ring_pen_color=QColor(70, 70, 70),
-        inner_ring_brush_color=QColor(40, 40, 40),
-        inner_circle_brush_color=QColor(20, 20, 20),
-        number_font_size=14,
-        number_font_family="Arial",
-    )
+    import qdarktheme
+
+    # 더미 ViewModel 클래스 (신호 연결 없이도 동작)
+    class DummyViewModel:
+        cpu_data_updated = type("Signal", (), {"connect": lambda self, x: None})()
+
+    app = QApplication(sys.argv)
+    qdarktheme.setup_theme("dark")
+
+    # CircularGaugeWidget 인스턴스 생성 (core_id="1", viewmodel=DummyViewModel)
+    gauge = CircularGaugeWidget("1", DummyViewModel())
+    gauge.setValue(75)  # 테스트용 값
     gauge.resize(400, 400)
     gauge.show()
     sys.exit(app.exec_())

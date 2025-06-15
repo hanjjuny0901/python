@@ -58,7 +58,7 @@ class SystemResourceView(QWidget):
         self.customContextMenuRequested.connect(self.show_context_menu)
         self.grid_size = 10
         self.tiles = []
-        self.scene.setSceneRect(0, 0, 800, 600)
+        self.scene.setSceneRect(0, 0, 600, 600)
         self.model = SystemResourceModel()
         self.viewmodel = SystemResourceViewModel(self.model)
         self.viewmodel.cpu_data_updated.connect(self.on_cpu_data_updated)
@@ -259,7 +259,7 @@ class SystemResourceView(QWidget):
                     all_tiles=self.tiles,
                     tile_model=tile_model,
                 )
-                tile.setRect(10, 10, tile_model.width, tile_model.height)
+                tile.setRect(0, 0, tile_model.width, tile_model.height)
                 tile.setPos(tile_model.x, tile_model.y)
                 tile._update_proxy_geometry()
                 self.scene.addItem(tile)
