@@ -39,8 +39,9 @@ class ColorDemoWidget(QWidget):
 
 
 class SystemResourceView(QWidget):
-    def __init__(self):
+    def __init__(self, system_name: str = "AP1"):
         super().__init__()
+        self.system_name = system_name
         main_layout = QVBoxLayout(self)
         self.scene = QGraphicsScene()
         self.view = QGraphicsView(self.scene)
@@ -219,14 +220,14 @@ class SystemResourceView(QWidget):
             self.tiles.append(color_demo_tile)
 
     def save_layout(self):
-        state = self.model.to_dict()
-        with open("dashboard_state.json", "w", encoding="utf-8") as f:
-            json.dump(state, f, indent=2)
-        print("저장 완료: dashboard_state.json")
+        filename = f"dashboard_state_{self.system_name}.json"  # ✅ 시스템별 파일명
+        with open(filename, "w", encoding="utf-8") as f:
+            json.dump(self.model.to_dict(), f, indent=2)
 
     def load_layout(self):
+        filename = f"dashboard_state_{self.system_name}.json"  # ✅ 시스템별 파일명
         try:
-            with open("dashboard_state.json", "r", encoding="utf-8") as f:
+            with open(filename, "r", encoding="utf-8") as f:
                 data = json.load(f)
 
             # ✅ JSON 데이터를 모델에 주입
@@ -280,10 +281,8 @@ class SystemResourceView(QWidget):
             self.create_tiles()  # 실패 시 기본 타일 생성
 
     def _has_saved_layout(self):
-        return (
-            os.path.exists("dashboard_state.json")
-            and os.path.getsize("dashboard_state.json") > 0
-        )
+        filename = f"dashboard_state_{self.system_name}.json"  # ✅ 시스템별 파일명
+        return os.path.exists(filename) and os.path.getsize(filename) > 0
 
     def update_minimum_size(self):
         if not self.tiles:
