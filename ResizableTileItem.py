@@ -23,7 +23,6 @@ from SystemResourceModel import SystemResourceModel
 from SystemResourceViewModel import SystemResourceViewModel
 
 from CircularGaugeWidget import CircularGaugeWidget  # CircularGaugeWidget
-from GaugeWithTitle import GaugeWithTitle
 from CPUGraphWidget import CPUGraphWidget
 import qdarktheme
 from SystemResourceModel import TileModel

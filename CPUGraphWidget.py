@@ -114,21 +114,33 @@ class CPUGraphWidget(QWidget):
 
     def update_graph(self, cpu_value: float = None):
         """외부에서 값을 전달받거나 psutil로 직접 측정"""
-        # ✅ 값이 없으면 psutil로 측정 (테스트용)
         if cpu_value is None:
             cpu_value = psutil.cpu_percent()
 
         self.data.pop(0)
         self.data.append(cpu_value)
-        self.line.set_ydata(self.data)
+        y = np.array(self.data)
+        x = np.arange(len(y))
+
+        # ✅ 기존 라인과 채움 영역 업데이트 (제거하지 않음)
+        self.line.set_ydata(y)
 
         # 채움 영역 업데이트
-        x = np.arange(len(self.data))
-        y = self.data
         verts = np.vstack(
             [np.column_stack((x, y)), np.column_stack((x[::-1], np.zeros_like(x)))]
         )
         self.fill.set_verts([verts])
+
+        # ✅ 색상 조건에 따라 라인 색상 변경
+        if cpu_value <= 80:
+            color = "#00FF00"
+        elif 80 < cpu_value <= 90:
+            color = "#FFFF00"
+        else:
+            color = "#FF0000"
+        self.line.set_color(color)
+        self.fill.set_color(color)
+
         self.canvas.draw_idle()
 
 
